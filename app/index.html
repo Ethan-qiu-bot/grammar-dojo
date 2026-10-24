@@ -188,6 +188,19 @@
   .sum-kpi .l { color: var(--muted); font-size: 12.5px; }
   .sum-kpi .v { font-size: 21px; font-weight: 600; }
   .ratechg { font-weight: 600; }
+  /* 汇总报告 */
+  .rep-bar { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .rep-bar .nm { width: 220px; font-size: 13.5px; flex: 0 0 auto; }
+  .rep-bar .track { flex: 1 1 auto; height: 10px; border-radius: 5px; background: #eceff3; overflow: hidden; }
+  .rep-bar .fill { height: 100%; border-radius: 5px; }
+  .rep-bar .pc { flex: 0 0 auto; font-size: 13px; width: 120px; text-align: right; }
+  .stackbar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; margin: 8px 0 4px; }
+  .stackbar div { display: flex; align-items: center; justify-content: center; font-size: 11.5px; color: #fff; overflow: hidden; white-space: nowrap; }
+  .weekbars { display: flex; align-items: flex-end; gap: 14px; height: 130px; padding: 0 6px; }
+  .weekbars .wcol { flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+  .weekbars .wfill { background: var(--primary); border-radius: 4px 4px 0 0; }
+  .weekbars .wlab { font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+  @media (max-width: 560px) { .rep-bar .nm { width: 140px; } .rep-bar .pc { width: auto; } }
   /* 辨析对比表 */
   table.cmp { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; }
   table.cmp th, table.cmp td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
@@ -204,7 +217,7 @@
 <div class="wrap">
   <header class="top">
     <h1>语法道场</h1>
-    <span class="ver">v0.4.6 · PRD v1.4</span>
+    <span class="ver">v0.5.0 · PRD v1.5</span>
   </header>
 
   <nav class="tabs" aria-label="主导航">
@@ -213,6 +226,7 @@
     <button data-tab="notes" type="button" aria-pressed="false">笔记</button>
     <button data-tab="errors" type="button" aria-pressed="false">错误本</button>
     <button data-tab="quiz" type="button" aria-pressed="false">测试</button>
+    <button data-tab="report" type="button" aria-pressed="false">汇总报告</button>
     <button data-tab="settings" type="button" aria-pressed="false">设置</button>
   </nav>
 
@@ -311,6 +325,39 @@
     <div id="quiz-area" role="status" aria-live="polite"></div>
   </section>
 
+  <!-- 汇总报告 -->
+  <section class="panel" id="panel-report" hidden>
+    <div class="card">
+      <h2>总览</h2>
+      <div class="sum-kpis">
+        <div class="sum-kpi"><div class="l">累计句子</div><div class="v" id="rep-total">0</div></div>
+        <div class="sum-kpi"><div class="l">正确率</div><div class="v" id="rep-rate">—</div></div>
+        <div class="sum-kpi"><div class="l">覆盖语法点</div><div class="v" id="rep-gp">0</div></div>
+        <div class="sum-kpi"><div class="l">连续练习</div><div class="v" id="rep-streak">0</div></div>
+      </div>
+      <p class="hint" style="margin:8px 0 0">正确率＝判定非「有误」（正确＋不自然）的句子占比。</p>
+    </div>
+    <div class="card">
+      <h2>语法点错误率 Top 5</h2>
+      <div id="rep-top"></div>
+    </div>
+    <div class="card">
+      <h2>错误类型占比</h2>
+      <div id="rep-types"></div>
+      <p class="hint" id="rep-types-note" style="margin:4px 0 0"></p>
+    </div>
+    <div class="card">
+      <h2>正确率趋势（按周）</h2>
+      <div id="rep-trend"></div>
+    </div>
+    <div class="row" style="justify-content:center">
+      <button class="plain" id="btn-export-md" type="button">导出 Markdown</button>
+      <button class="plain" id="btn-export-csv" type="button">导出 CSV</button>
+    </div>
+    <p class="hint" style="text-align:center">Markdown＝本页汇总报告；CSV＝逐句明细（含批改与标签，带 BOM 可直接用 Excel 打开）。</p>
+    <p class="status" id="rep-status" role="status" aria-live="polite"></p>
+  </section>
+
   <!-- 设置 -->
   <section class="panel" id="panel-settings" hidden>
     <div class="card">
@@ -349,13 +396,13 @@
     </div>
   </section>
 
-  <footer>数据仅保存在本机浏览器 localStorage · 建议定期「导出备份」 · M4 将交付汇总报告与 Markdown/CSV 导出</footer>
+  <footer>数据仅保存在本机浏览器 localStorage · 建议定期「导出备份」 · 一期 M1~M4 全部交付</footer>
 </div>
 
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '0.4.6';
+  var APP_VERSION = '0.5.0';
 
   /* ---------- 存储 ---------- */
   function load(key, fallback) {
@@ -402,13 +449,14 @@
         b.classList.toggle('active', on);
         b.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
-      ['practice', 'library', 'notes', 'errors', 'quiz', 'settings'].forEach(function (n) {
+      ['practice', 'library', 'notes', 'errors', 'quiz', 'report', 'settings'].forEach(function (n) {
         $('panel-' + n).hidden = (n !== name);
       });
       if (name === 'library') renderLibrary();
       if (name === 'notes') renderNotes();
       if (name === 'errors') renderErrors();
       if (name === 'quiz') renderQuizBrief();
+      if (name === 'report') renderReport();
     });
   });
 
@@ -2014,10 +2062,193 @@
   sentences.forEach(function (rec) { patchGrammarPoints(rec); });
   save('gd_sentences', sentences);
 
+  /* ---------- M4：汇总报告（F2-3）与导出（F2-4） ---------- */
+  function dayKey(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function buildReportData() {
+    var total = sentences.length;
+    var ok = sentences.filter(function (s) { return s.verdict !== 'wrong'; }).length;
+    var rate = total ? ok / total : 0;
+    var gpSet = {};
+    sentences.forEach(function (rec) {
+      (rec.corrections || []).forEach(function (c) { if (c.grammar_point) gpSet[c.grammar_point] = 1; });
+      (rec.grammar_points || []).forEach(function (g) { if (g.point) gpSet[g.point] = 1; });
+    });
+    var gpCount = Object.keys(gpSet).length;
+    var days = {};
+    sentences.forEach(function (s) { days[dayKey(new Date(s.created_at))] = 1; });
+    var cursor = new Date(); cursor.setHours(12, 0, 0, 0);
+    if (!days[dayKey(cursor)]) cursor.setDate(cursor.getDate() - 1);
+    var streak = 0;
+    while (days[dayKey(cursor)]) { streak++; cursor.setDate(cursor.getDate() - 1); }
+    var top5 = errStore.items.slice().sort(function (a, b) { return errRate(b) - errRate(a); }).slice(0, 5)
+      .map(function (it) {
+        var r = errRate(it);
+        return { point: it.point, level: it.level || '', wrong: it.wrong, appear: it.appear, rate: r, cls: r >= 0.5 ? 'var(--red)' : (r >= 0.2 ? 'var(--yellow)' : 'var(--green)') };
+      });
+    var typeMap = {};
+    errStore.items.forEach(function (it) { var t = it.error_type || '其他'; typeMap[t] = (typeMap[t] || 0) + it.wrong; });
+    var totalWrong = 0;
+    Object.keys(typeMap).forEach(function (t) { totalWrong += typeMap[t]; });
+    var palette = ['var(--primary)', '#7c9dfd', 'var(--red)', 'var(--yellow)', 'var(--muted)'];
+    var types = Object.keys(typeMap).sort(function (a, b) { return typeMap[b] - typeMap[a]; })
+      .map(function (t, i) {
+        return { type: t, count: typeMap[t], pct: totalWrong ? Math.round(typeMap[t] / totalWrong * 100) : 0, color: palette[i % palette.length] };
+      });
+    var weeks = [];
+    var mon = new Date(); mon.setHours(12, 0, 0, 0);
+    mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+    for (var w = 5; w >= 0; w--) {
+      var start = new Date(mon); start.setDate(mon.getDate() - 7 * w);
+      var end = new Date(start); end.setDate(start.getDate() + 7);
+      var inWeek = sentences.filter(function (s) { return s.created_at >= start.getTime() && s.created_at < end.getTime(); });
+      if (inWeek.length) {
+        var okc = inWeek.filter(function (s) { return s.verdict !== 'wrong'; }).length;
+        weeks.push({ label: (start.getMonth() + 1) + '/' + start.getDate() + ' 周', count: inWeek.length, rate: okc / inWeek.length });
+      }
+    }
+    return { total: total, rate: rate, gpCount: gpCount, streak: streak, top5: top5, types: types, totalWrong: totalWrong, weeks: weeks };
+  }
+  function renderReport() {
+    var d = buildReportData();
+    $('rep-total').textContent = d.total;
+    $('rep-rate').textContent = d.total ? Math.round(d.rate * 100) + '%' : '—';
+    $('rep-gp').textContent = d.gpCount;
+    $('rep-streak').innerHTML = d.streak + '<small style="font-size:12px;color:var(--muted)">天</small>';
+    if (!d.top5.length) {
+      $('rep-top').innerHTML = '<p class="hint">错误本暂无条目。判「有误」的句子会自动收录并统计错误率。</p>';
+    } else {
+      $('rep-top').innerHTML = d.top5.map(function (it) {
+        return '<div class="rep-bar"><span class="nm">' + escapeHtml(it.point) + (it.level ? ' <span class="badge level">' + escapeHtml(it.level) + '</span>' : '') + '</span>' +
+          '<div class="track"><div class="fill" style="width:' + Math.max(Math.round(it.rate * 100), 1) + '%;background:' + it.cls + '"></div></div>' +
+          '<span class="pc tabular-nums">' + Math.round(it.rate * 100) + '%（' + it.wrong + '／' + it.appear + '）</span></div>';
+      }).join('');
+    }
+    if (!d.types.length) {
+      $('rep-types').innerHTML = '<p class="hint">暂无错误数据。</p>';
+      $('rep-types-note').textContent = '';
+    } else {
+      $('rep-types').innerHTML = '<div class="stackbar">' + d.types.map(function (t) {
+        return '<div style="width:' + t.pct + '%;background:' + t.color + '">' + (t.pct >= 9 ? escapeHtml(t.type + ' ' + t.pct + '%') : '') + '</div>';
+      }).join('') + '</div><p class="hint" style="margin:4px 0 0">' +
+        d.types.map(function (t) { return escapeHtml(t.type) + ' ' + t.pct + '%'; }).join(' · ') + '</p>';
+      $('rep-types-note').textContent = d.types.length >= 2
+        ? '惯性错误模式一目了然：「' + d.types[0].type + '」占比最高（' + d.types[0].pct + '%），是优先攻克方向。'
+        : '';
+    }
+    if (!d.weeks.length) {
+      $('rep-trend').innerHTML = '<p class="hint">暂无练习数据。</p>';
+    } else {
+      $('rep-trend').innerHTML = '<div class="weekbars">' + d.weeks.map(function (w) {
+        return '<div class="wcol"><div class="wfill" style="height:' + Math.max(Math.round(w.rate * 100), 2) + '%"></div>' +
+          '<div class="wlab">' + w.label + '<br><b style="color:var(--text)">' + Math.round(w.rate * 100) + '%</b><br><span style="font-size:11.5px">' + w.count + ' 句</span></div></div>';
+      }).join('') + '</div>';
+    }
+  }
+  function downloadText(filename, text, mime) {
+    var blob = new Blob([text], { type: mime });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }
+  function stamp() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
+  }
+  function buildMarkdown() {
+    var d = buildReportData();
+    var L = [];
+    L.push('# 语法道场 · 学习汇总报告');
+    L.push('');
+    L.push('生成时间：' + new Date().toLocaleString('zh-CN') + ' ｜ 应用版本 v' + APP_VERSION);
+    L.push('');
+    L.push('## 一、总览');
+    L.push('');
+    L.push('| 指标 | 数值 |');
+    L.push('|---|---|');
+    L.push('| 累计句子 | ' + d.total + ' 句 |');
+    L.push('| 正确率 | ' + (d.total ? Math.round(d.rate * 100) + '%' : '—') + '（判定非「有误」的句子占比） |');
+    L.push('| 覆盖语法点 | ' + d.gpCount + ' 个 |');
+    L.push('| 连续练习 | ' + d.streak + ' 天 |');
+    L.push('');
+    L.push('## 二、语法点错误率 Top 5');
+    L.push('');
+    if (d.top5.length) {
+      L.push('| 语法点 | 级别 | 答错／出现 | 错误率 |');
+      L.push('|---|---|---|---|');
+      d.top5.forEach(function (it) {
+        L.push('| ' + it.point + ' | ' + (it.level || '—') + ' | ' + it.wrong + '／' + it.appear + ' | ' + Math.round(it.rate * 100) + '% |');
+      });
+    } else {
+      L.push('错误本暂无条目。');
+    }
+    L.push('');
+    L.push('## 三、错误类型占比');
+    L.push('');
+    if (d.types.length) {
+      L.push('| 类型 | 错误次数 | 占比 |');
+      L.push('|---|---|---|');
+      d.types.forEach(function (t) { L.push('| ' + t.type + ' | ' + t.count + ' | ' + t.pct + '% |'); });
+    } else {
+      L.push('暂无错误数据。');
+    }
+    L.push('');
+    L.push('## 四、正确率趋势（按周）');
+    L.push('');
+    if (d.weeks.length) {
+      L.push('| 周（起始日） | 句数 | 正确率 |');
+      L.push('|---|---|---|');
+      d.weeks.forEach(function (w) { L.push('| ' + w.label + ' | ' + w.count + ' | ' + Math.round(w.rate * 100) + '% |'); });
+    } else {
+      L.push('暂无练习数据。');
+    }
+    L.push('');
+    return L.join('\r\n');
+  }
+  function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+  function buildCSV() {
+    var head = ['时间', '原文', '判定', '译文', '错误明细', '语法点', 'J.TEST级别', '错误类型'].map(csvCell).join(',');
+    var lines = [head];
+    sentences.slice().sort(function (a, b) { return a.created_at - b.created_at; }).forEach(function (rec) {
+      var errs = (rec.corrections || []).map(function (c) { return (c.wrong || '？') + '→' + (c.right || '？'); }).join('；');
+      var gps = {};
+      (rec.corrections || []).forEach(function (c) { if (c.grammar_point) gps[c.grammar_point] = 1; });
+      (rec.grammar_points || []).forEach(function (g) { if (g.point) gps[g.point] = 1; });
+      var lvls = {}, types = {};
+      (rec.corrections || []).forEach(function (c) {
+        if (c.level) lvls[c.level] = 1;
+        if (c.error_type) types[c.error_type] = 1;
+      });
+      lines.push([
+        new Date(rec.created_at).toLocaleString('zh-CN'),
+        rec.text,
+        VERDICT_TEXT[rec.verdict] || rec.verdict,
+        rec.translation || '',
+        errs,
+        Object.keys(gps).join('；'),
+        Object.keys(lvls).join('；'),
+        Object.keys(types).join('；')
+      ].map(csvCell).join(','));
+    });
+    return '\uFEFF' + lines.join('\r\n');
+  }
+  $('btn-export-md').addEventListener('click', function () {
+    downloadText('grammar-dojo-report-' + stamp() + '.md', buildMarkdown(), 'text/markdown;charset=utf-8');
+    $('rep-status').textContent = '已导出 Markdown 报告。';
+  });
+  $('btn-export-csv').addEventListener('click', function () {
+    downloadText('grammar-dojo-sentences-' + stamp() + '.csv', buildCSV(), 'text/csv;charset=utf-8');
+    $('rep-status').textContent = '已导出 ' + sentences.length + ' 句明细 CSV。';
+  });
+
   updateLibTab();
   updateErrTab();
   /* 测试钩子：供自动化验证接续扫描（不涉及敏感数据） */
-  window.__gdTest = { hardConjScan: hardConjScan, softConjScan: softConjScan, lookupGrammar: lookupGrammar, patchGrammarPoints: patchGrammarPoints, applyFactChecks: applyFactChecks, extractJson: extractJson };
+  window.__gdTest = { hardConjScan: hardConjScan, softConjScan: softConjScan, lookupGrammar: lookupGrammar, patchGrammarPoints: patchGrammarPoints, applyFactChecks: applyFactChecks, extractJson: extractJson, buildReportData: buildReportData, buildMarkdown: buildMarkdown, buildCSV: buildCSV };
 })();
 </script>
 </body>
