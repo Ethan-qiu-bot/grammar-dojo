@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>语法道场 · 日语语法学习工具</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --text: #1f2328;
+    --muted: #6a737d;
+    --border: #e1e4e8;
+    --primary: #3b6ef5;
+    --primary-ink: #ffffff;
+    --green: #1a9c6b;
+    --green-bg: #e8f7f0;
+    --yellow: #b8860b;
+    --yellow-bg: #fdf6e3;
+    --red: #d64545;
+    --red-bg: #fdeeee;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", "Microsoft YaHei", "Hiragino Sans GB", Arial, sans-serif;
+    font-size: 15px; line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
+  header.top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  header.top h1 { font-size: 22px; margin: 0; }
+  header.top .ver { color: var(--muted); font-size: 13px; }
+  .tabs { display: flex; gap: 6px; margin: 14px 0 18px; flex-wrap: wrap; }
+  .tabs button {
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+    padding: 7px 18px; border-radius: 999px; font-size: 14px; cursor: pointer;
+  }
+  .tabs button.active { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+  .tabs button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .panel[hidden] { display: none; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+  .card h2 { font-size: 16px; margin: 0 0 10px; }
+  textarea {
+    width: 100%; min-height: 84px; padding: 10px 12px; font-size: 16px;
+    border: 1px solid var(--border); border-radius: 8px; resize: vertical;
+    font-family: inherit; background: #fff; color: var(--text);
+  }
+  textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  button.primary {
+    background: var(--primary); color: var(--primary-ink); border: none;
+    padding: 9px 22px; border-radius: 8px; font-size: 15px; cursor: pointer;
+  }
+  button.plain {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer;
+  }
+  button.plain.danger { color: var(--red); border-color: var(--red); }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .hint { color: var(--muted); font-size: 13px; }
+  /* 判定横幅 */
+  .verdict { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 14px; border-radius: 8px; font-weight: 600; margin-bottom: 12px; }
+  .verdict.correct { background: var(--green-bg); color: var(--green); }
+  .verdict.unnatural { background: var(--yellow-bg); color: var(--yellow); }
+  .verdict.wrong { background: var(--red-bg); color: var(--red); }
+  .badge {
+    display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: 12.5px;
+    background: #eef1f6; color: var(--text); font-weight: 400; margin: 0 4px 4px 0;
+  }
+  .badge.level { background: #e8effe; }
+  .badge.etype { background: #f3ece3; }
+  mark.hl-err {
+    background: transparent; color: var(--red); font-weight: 600;
+    text-decoration: underline wavy var(--red); text-underline-offset: 4px;
+  }
+  .sentence { font-size: 17px; margin: 4px 0 10px; }
+  .fixed-part { color: var(--green); font-weight: 600; }
+  .fix-note { color: var(--muted); font-size: 13px; }
+  .corr { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-top: 10px; }
+  .corr .chg { font-size: 16px; margin-bottom: 6px; }
+  .corr .chg .arr { color: var(--muted); margin: 0 8px; }
+  .corr dl { margin: 0; display: grid; grid-template-columns: 64px 1fr; row-gap: 4px; }
+  .corr dt { color: var(--muted); font-size: 13px; }
+  .corr dd { margin: 0; font-size: 14px; }
+  .translation { color: var(--muted); font-size: 14px; margin-top: 12px; }
+  .status { font-size: 14px; }
+  .status.err { color: var(--red); white-space: pre-wrap; }
+  /* 下一句与归档动画 */
+  .next-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 2px 0 10px; }
+  .result-wrap.archiving { position: relative; animation: archiveUp .55s cubic-bezier(.4, 0, .2, 1) forwards; }
+  .result-wrap.archiving::after {
+    content: '✓ 已存入句库';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(26, 156, 107, .94); color: #fff; font-weight: 600; font-size: 17px;
+    border-radius: 10px;
+    animation: saveFlash .55s ease forwards;
+  }
+  @keyframes archiveUp {
+    0% { transform: translateY(0); opacity: 1; }
+    45% { transform: translateY(-8px); opacity: 1; }
+    100% { transform: translateY(-30px); opacity: 0; }
+  }
+  @keyframes saveFlash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .result-wrap.archiving, .result-wrap.archiving::after { animation-duration: .01s; }
+  }
+  /* 句库 */
+  .stats { color: var(--muted); font-size: 13.5px; margin-bottom: 10px; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filters button {
+    border: 1px solid var(--border); background: var(--card); border-radius: 999px;
+    padding: 4px 14px; font-size: 13px; cursor: pointer; color: var(--text);
+  }
+  .filters button.active { background: var(--text); border-color: var(--text); color: #fff; }
+  .rec { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: var(--card); }
+  .rec .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .rec .head .v { font-weight: 600; }
+  .rec .head .v.correct { color: var(--green); }
+  .rec .head .v.unnatural { color: var(--yellow); }
+  .rec .head .v.wrong { color: var(--red); }
+  .rec .head time { color: var(--muted); font-size: 12.5px; margin-left: auto; }
+  .rec .body { margin-top: 6px; display: none; }
+  .rec.open .body { display: block; }
+  .rec .toggle { color: var(--primary); background: none; border: none; font-size: 13px; cursor: pointer; padding: 2px 4px; }
+  .rec .del { color: var(--muted); background: none; border: none; cursor: pointer; font-size: 12.5px; padding: 2px 4px; }
+  .rec .del:hover { color: var(--red); }
+  /* 设置 */
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 13.5px; color: var(--muted); margin-bottom: 4px; }
+  .field input, .field select {
+    width: 100%; padding: 8px 10px; font-size: 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-family: inherit; background: #fff; color: var(--text);
+  }
+  .proxy-label { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13.5px; cursor: pointer; }
+  .proxy-label input { width: auto; margin: 0; }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 26px; text-align: center; }
+  /* 考点语法 */
+  .gp-block { margin-top: 12px; }
+  .gp-block h3 { font-size: 14px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+  .gp-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .gp { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--card); border-radius: 8px; padding: 6px 12px; font-size: 13.5px; cursor: pointer; font-family: inherit; color: var(--text); }
+  .gp:hover { border-color: var(--primary); }
+  .gp .gp-seg { font-weight: 600; }
+  .gp .gp-name { color: var(--muted); }
+  .gp .gp-flag { font-size: 12px; color: var(--primary); }
+  .gp.marked { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+  .gp.marked .gp-name, .gp.marked .gp-flag { color: var(--primary-ink); }
+  /* 笔记 */
+  .note-item { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 6px 0; border-top: 1px dashed var(--border); }
+  .note-item .gp-seg { color: var(--primary); font-weight: 600; }
+  .note-item .note-sent { flex: 1 1 260px; }
+  .note-item time { color: var(--muted); font-size: 12.5px; }
+  /* 错误本 */
+  .rate-badge { font-weight: 600; }
+  .rate-r { background: var(--red-bg); color: var(--red); }
+  .rate-y { background: var(--yellow-bg); color: var(--yellow); }
+  .rate-g { background: var(--green-bg); color: var(--green); }
+  .err-bar { display: flex; align-items: center; gap: 10px; margin: 8px 0 2px; }
+  .err-bar .track { flex: 1 1 auto; height: 10px; border-radius: 5px; background: #eceff3; overflow: hidden; }
+  .err-bar .fill { height: 100%; border-radius: 5px; }
+  .err-bar .pc { flex: 0 0 auto; font-size: 13px; }
+  .err-ex { border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px; }
+  /* 测试 */
+  .quiz-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .quiz-progress { height: 8px; border-radius: 4px; background: #eceff3; overflow: hidden; margin: 10px 0; }
+  .quiz-progress div { height: 100%; background: var(--primary); border-radius: 4px; }
+  .blank-slot { color: var(--muted); border-bottom: 2px solid var(--muted); padding: 0 26px; margin: 0 2px; }
+  .opt { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); background: var(--card); border-radius: 8px; padding: 9px 14px; cursor: pointer; font-size: 14.5px; margin-bottom: 8px; }
+  .opt:hover { border-color: var(--primary); }
+  .opt input { width: auto; margin: 0; }
+  .opt.sel { border-color: var(--primary); background: #f0f4ff; }
+  .opt.good { border-color: var(--green); background: var(--green-bg); }
+  .opt.bad { border-color: var(--red); background: var(--red-bg); }
+  .quiz-input { width: 100%; max-width: 340px; padding: 9px 12px; font-size: 16px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
+  .fb { border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+  .fb.ok { background: var(--green-bg); border: 1px solid #bfe6d6; }
+  .fb.bad { background: var(--red-bg); border: 1px solid #f3c1c1; }
+  .fb h3 { margin: 0 0 6px; font-size: 15px; }
+  .fb.ok h3 { color: var(--green); }
+  .fb.bad h3 { color: var(--red); }
+  .fb dl { margin: 6px 0 0; display: grid; grid-template-columns: 64px 1fr; row-gap: 4px; }
+  .fb dt { color: var(--muted); font-size: 13px; }
+  .fb dd { margin: 0; font-size: 14px; }
+  .sum-kpis { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .sum-kpi { flex: 1 1 140px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; background: var(--card); }
+  .sum-kpi .l { color: var(--muted); font-size: 12.5px; }
+  .sum-kpi .v { font-size: 21px; font-weight: 600; }
+  .ratechg { font-weight: 600; }
+  /* 辨析对比表 */
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; }
+  table.cmp th, table.cmp td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
+  table.cmp th { background: #f0f2f5; font-weight: 600; white-space: nowrap; }
+  .table-responsive { overflow-x: auto; }
+  @media (max-width: 560px) {
+    .wrap { padding: 12px 10px 40px; }
+    .card { padding: 12px; }
+    .corr dl { grid-template-columns: 56px 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>语法道场</h1>
+    <span class="ver">v0.4.6 · PRD v1.4</span>
+  </header>
+
+  <nav class="tabs" aria-label="主导航">
+    <button class="active" data-tab="practice" type="button" aria-pressed="true">校对练习</button>
+    <button data-tab="library" type="button" aria-pressed="false">句库</button>
+    <button data-tab="notes" type="button" aria-pressed="false">笔记</button>
+    <button data-tab="errors" type="button" aria-pressed="false">错误本</button>
+    <button data-tab="quiz" type="button" aria-pressed="false">测试</button>
+    <button data-tab="settings" type="button" aria-pressed="false">设置</button>
+  </nav>
+
+  <!-- 校对练习 -->
+  <section class="panel" id="panel-practice">
+    <div class="card">
+      <h2>输入一句日语（一次 1 句）</h2>
+      <textarea id="sentence-input" placeholder="例：私は毎日学校へ行くとき、バスを乗ります。" aria-label="输入一句日语"></textarea>
+      <div class="row">
+        <button class="primary" id="btn-submit" type="button">提交校对</button>
+        <button class="plain" id="btn-demo" type="button">演示结果（无需 API）</button>
+        <span class="hint">Ctrl+Enter 快速提交 · 支持日文 IME 输入</span>
+      </div>
+      <p class="status" id="submit-status" role="status" aria-live="polite"></p>
+    </div>
+    <div id="result-area"></div>
+  </section>
+
+  <!-- 句库 -->
+  <section class="panel" id="panel-library" hidden>
+    <div class="card">
+      <h2>句库</h2>
+      <p class="stats" id="lib-stats"></p>
+      <div class="filters" id="lib-filters">
+        <button class="active" data-f="all" type="button">全部</button>
+        <button data-f="wrong" type="button">有误</button>
+        <button data-f="unnatural" type="button">不自然</button>
+        <button data-f="correct" type="button">正确</button>
+      </div>
+      <div class="row" style="margin:0 0 10px">
+        <input id="lib-search" type="text" placeholder="搜索句子关键词…" aria-label="搜索句子关键词" style="flex:1 1 200px;padding:8px 10px;font-size:14px;border:1px solid var(--border);border-radius:8px;font-family:inherit">
+        <select id="lib-gp" aria-label="按语法点筛选" style="padding:8px 10px;font-size:14px;border:1px solid var(--border);border-radius:8px;font-family:inherit"></select>
+      </div>
+      <div id="lib-list"></div>
+      <div class="row">
+        <button class="plain" id="btn-export" type="button">导出备份（JSON）</button>
+        <button class="plain" id="btn-import" type="button">导入备份</button>
+        <input type="file" id="import-file" accept=".json,application/json" hidden>
+        <button class="plain danger" id="btn-clear" type="button">清空全部数据</button>
+      </div>
+      <p class="status" id="lib-status" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- 笔记 -->
+  <section class="panel" id="panel-notes" hidden>
+    <div class="card">
+      <h2>语法笔记（按标记的考点归纳）</h2>
+      <p class="stats" id="notes-stats"></p>
+      <div id="notes-list"></div>
+    </div>
+    <div class="card">
+      <h2>相似语法归纳与辨析</h2>
+      <p class="stats" id="cmp-stats"></p>
+      <div id="cmp-clusters"></div>
+      <div class="row" style="margin-top:10px">
+        <input id="cmp-input" type="text" class="quiz-input" style="max-width:none;flex:1 1 280px" placeholder="自定义辨析：输入 2~4 个语法条目，用、分隔（如：〜上で、〜上の、〜上は）">
+        <button class="plain" id="cmp-run" type="button">AI 辨析</button>
+      </div>
+      <p class="hint">「AI 辨析」调用大模型生成逐条对比表（意思／接续／核心区别／例句），首次生成后缓存本机。需已在设置中配置 API Key。</p>
+      <div id="cmp-result" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- 错误本 -->
+  <section class="panel" id="panel-errors" hidden>
+    <div class="card">
+      <h2>错误本</h2>
+      <p class="stats" id="err-stats"></p>
+      <div class="filters" id="err-sorts">
+        <button class="active" data-s="rate" type="button">按错误率 ↓</button>
+        <button data-s="wrong" type="button">按错误次数</button>
+        <button data-s="recent" type="button">按最近出错</button>
+      </div>
+      <div id="err-list"></div>
+    </div>
+  </section>
+
+  <!-- 测试 -->
+  <section class="panel" id="panel-quiz" hidden>
+    <div class="card" id="quiz-setup">
+      <h2>测试</h2>
+      <p class="stats" id="quiz-brief"></p>
+      <div class="row">
+        <label class="proxy-label" for="quiz-count">每轮题数
+          <select id="quiz-count" class="quiz-input" style="width:auto;max-width:none;padding:6px 10px;font-size:14px">
+            <option value="5">5 题</option>
+            <option value="10" selected>10 题</option>
+            <option value="20">20 题</option>
+          </select>
+        </label>
+        <button class="primary" id="quiz-start" type="button">开始测试</button>
+      </div>
+      <p class="hint">题源：错误本条目为主（按错误率加权，同条目/同语法点每轮 ≤2 题）＋少量正确句防遗忘（≤20%）；答错的题本轮内稍后重测直到答对。</p>
+    </div>
+    <div id="quiz-area" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- 设置 -->
+  <section class="panel" id="panel-settings" hidden>
+    <div class="card">
+      <h2>大模型 API 设置（校对引擎）</h2>
+      <div class="field">
+        <label for="set-provider">服务商</label>
+        <select id="set-provider">
+          <option value="glm">智谱 GLM（默认，端点已内置，无需填写地址）</option>
+          <option value="custom">自定义 OpenAI 兼容端点</option>
+        </select>
+      </div>
+      <div class="field" id="field-endpoint">
+        <label for="set-endpoint">自定义 API 地址（必须以 /chat/completions 结尾）</label>
+        <input id="set-endpoint" type="text" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="set-key">API Key（仅保存在本机浏览器，不上传）</label>
+        <input id="set-key" type="password" spellcheck="false" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="set-model">模型名称（如 glm-4-flash / glm-4.6，或其他兼容模型）</label>
+        <input id="set-model" type="text" spellcheck="false">
+      </div>
+      <div class="field">
+        <label class="proxy-label" for="set-proxy">
+          <input type="checkbox" id="set-proxy" checked>
+          通过本地服务转发（绕开浏览器 CORS 限制；需保持 serve.ps1 运行）
+        </label>
+      </div>
+      <div class="row">
+        <button class="primary" id="btn-save-settings" type="button">保存设置</button>
+        <button class="plain" id="btn-test" type="button">测试连接</button>
+      </div>
+      <p class="status" id="set-status" role="status" aria-live="polite"></p>
+      <p class="hint">选择「智谱 GLM」时 API 地址已内置，只需填 Key 即可；Key 和设置会在点「测试连接」或「保存设置」时自动存本机，刷新不丢。「本地转发」默认开启（请求经本机 serve.ps1 转发，避免浏览器 CORS 报错 Failed to fetch）。若批改出现漏判/误判，可把模型改为 glm-4.6 等更强型号提升判别力（按平台计费），并配合结果页的「重新批改」「反馈漏判/误判」使用。</p>
+    </div>
+  </section>
+
+  <footer>数据仅保存在本机浏览器 localStorage · 建议定期「导出备份」 · M4 将交付汇总报告与 Markdown/CSV 导出</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var APP_VERSION = '0.4.6';
+
+  /* ---------- 存储 ---------- */
+  function load(key, fallback) {
+    try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+    catch (e) { return fallback; }
+  }
+  function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+  var GLM_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+  var settings = load('gd_settings', {
+    provider: 'glm',
+    endpoint: GLM_ENDPOINT,
+    apiKey: '',
+    model: 'glm-4-flash',
+    proxy: true
+  });
+  if (settings.proxy === undefined) settings.proxy = true;
+  if (!settings.provider) {
+    settings.provider = (settings.endpoint && settings.endpoint !== GLM_ENDPOINT) ? 'custom' : 'glm';
+  }
+  var sentences = load('gd_sentences', []);
+
+  /* ---------- 工具 ---------- */
+  function $(id) { return document.getElementById(id); }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtTime(ts) {
+    var d = new Date(ts);
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return (d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  var VERDICT_TEXT = { correct: '正确', unnatural: '不自然', wrong: '有误' };
+
+  /* ---------- 页签（自带实现） ---------- */
+  var tabBtns = document.querySelectorAll('.tabs button');
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var name = btn.getAttribute('data-tab');
+      tabBtns.forEach(function (b) {
+        var on = b === btn;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      ['practice', 'library', 'notes', 'errors', 'quiz', 'settings'].forEach(function (n) {
+        $('panel-' + n).hidden = (n !== name);
+      });
+      if (name === 'library') renderLibrary();
+      if (name === 'notes') renderNotes();
+      if (name === 'errors') renderErrors();
+      if (name === 'quiz') renderQuizBrief();
+    });
+  });
+
+  /* ---------- Prompt 与解析 ---------- */
+  var SYSTEM_PROMPT = [
+    '你是严格的日语语法批改老师，精通 J.TEST 考纲语法条目。对用户提交的一句日语进行语法校对，并识别句中考点语法。',
+    '判定标准：以标准日语语法（J.TEST 考纲口径）为准；口语化但语法正确的表达判 unnatural 而非 wrong。',
+    '只输出一个 JSON 对象，不要输出任何其他文字或代码块标记。格式：',
+    '{"verdict":"correct|unnatural|wrong","translation":"整句中文翻译",',
+    '"grammar_points":[{"segment":"原句中体现该考点的片段（与原句完全一致的连续子串）","point":"具体语法条目名","meaning":"该条目的中文意思","level":"A-C|D-E|F-G","note":"用法说明（中文一句话）","related":["易混或相关的语法条目名（0~3个）"]}],',
+    '"corrections":[{"wrong":"原句中的错误片段（必须与原句完全一致的连续子串）","right":"正确写法（片段）",',
+    '"accepted":["其他同样正确的写法（可选，通常 0~2 个，无则空数组）",',
+    '"full_correct":"修正后的完整句子","reason":"错误原因：用中文解释语法规则",',
+    '"tip":"避免建议：辨析要点或记忆口诀","grammar_point":"语法条目名",',
+    '"level":"A-C|D-E|F-G","error_type":"助词误用|动词变形|时态・体|敬语|接续|惯用搭配|语序|其他"}]}',
+    '规则：',
+    '- point 必须细分到 J.TEST 考纲的具体语法条目（如「〜以後」「〜あまり（の）」「〜上で」），禁止写宽泛类别（如"时间表达""程度表达"）；corrections 的 grammar_point 同样要求。',
+    '- meaning 为该条目的中文释义，如：〜以後 → "…以后"；〜あまり → "过于，因过于…而"。',
+    '- 示例：「仕事を辞めた以後」→ point「〜以後」；「気持ちのあまり」→ point「〜あまり（の）」。',
+    '- related 填写形近或义近、容易混淆的条目（如「〜上で」的 related 可含「〜上の」「〜上は」）。',
+    '- 接续核对（重要）：对识别到的每个语法条目，逐一核对其接续要求（動詞活用形：て形/た形/辞書形/ない形、名詞、助詞）与本句实际形态是否一致；只要有一处接续不符合该条目的规范接续，即判 wrong 并写入 corrections。',
+    '- 高频接续误用类别必须重点检查：た形与て形混接（例：「〜以来」接动词て形，「辞めた以来」是错的，应为「辞めて以来」；同类还有 〜てから／〜たびに／〜おかげで）、动词活用形误用、助词冗余或缺失。',
+    '- 输出前自检：先在内部逐条目过一遍接续，再给出最终 verdict；不要凭"读起来顺不顺"的语感下结论。',
+    '- 句子完全正确时 corrections 为空数组；unnatural 时 corrections 给出更自然的表达；level 按 J.TEST 级别标注；多处错误逐一列出；accepted 仅在存在多种常见正确写法时填写。',
+    '- grammar_points 按考试重要性最多 6 条，完全正确的句子也必须给出。'
+  ].join('\n');
+
+  /* ---------- 模型 JSON 健壮解析（v0.4.6） ----------
+     模型常在字符串值内输出裸换行/制表符（JSON 规范禁止），或留尾逗号。
+     先按标准解析，失败后：① 字符串字面量内的裸控制字符转义；② 去尾逗号。 */
+  function sanitizeJsonText(s) {
+    var out = '';
+    var inStr = false, esc = false;
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (inStr) {
+        if (esc) { out += ch; esc = false; continue; }
+        if (ch === '\\') { out += ch; esc = true; continue; }
+        if (ch === '"') { inStr = false; out += ch; continue; }
+        var code = s.charCodeAt(i);
+        if (code < 32) {
+          if (code === 10) out += '\\n';
+          else if (code === 13) out += '\\r';
+          else if (code === 9) out += '\\t';
+          else out += ' ';
+          continue;
+        }
+        out += ch;
+      } else {
+        if (ch === '"') { inStr = true; out += ch; continue; }
+        out += ch;
+      }
+    }
+    return out;
+  }
+  function extractJson(content) {
+    var s = String(content || '').trim();
+    var fence = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) s = fence[1].trim();
+    var a = s.indexOf('{'), b = s.lastIndexOf('}');
+    if (a === -1 || b === -1) throw new Error('模型未返回 JSON');
+    var raw = s.slice(a, b + 1);
+    try {
+      return JSON.parse(raw);
+    } catch (e1) {
+      try {
+        return JSON.parse(sanitizeJsonText(raw));
+      } catch (e2) {
+        try {
+          return JSON.parse(sanitizeJsonText(raw).replace(/,\s*([}\]])/g, '$1'));
+        } catch (e3) {
+          throw new Error('模型返回的 JSON 无法解析（已尝试自动修复）');
+        }
+      }
+    }
+  }
+
+  function parseVerdict(content) {
+    var obj = extractJson(content);
+    var v = String(obj.verdict || '').toLowerCase();
+    if (['correct', 'unnatural', 'wrong'].indexOf(v) === -1) v = 'wrong';
+    var cors = Array.isArray(obj.corrections) ? obj.corrections : [];
+    cors = cors.map(function (c) {
+      return {
+        wrong: c.wrong || '',
+        right: c.right || '',
+        accepted: Array.isArray(c.accepted) ? c.accepted.filter(function (a) { return typeof a === 'string' && a; }) : [],
+        full_correct: c.full_correct || '',
+        reason: c.reason || '',
+        tip: c.tip || '',
+        grammar_point: c.grammar_point || '',
+        level: ['A-C', 'D-E', 'F-G'].indexOf(c.level) !== -1 ? c.level : '',
+        error_type: c.error_type || ''
+      };
+    });
+    var gps = Array.isArray(obj.grammar_points) ? obj.grammar_points : [];
+    gps = gps.map(function (g) {
+      return {
+        segment: g.segment || '',
+        point: g.point || '',
+        meaning: g.meaning || '',
+        level: ['A-C', 'D-E', 'F-G'].indexOf(g.level) !== -1 ? g.level : '',
+        note: g.note || '',
+        related: Array.isArray(g.related) ? g.related.filter(function (r) { return typeof r === 'string' && r; }).slice(0, 4) : [],
+        marked: false
+      };
+    });
+    return { verdict: v, translation: obj.translation || '', corrections: cors, grammar_points: gps };
+  }
+
+  function effectiveEndpoint() {
+    if (settings.provider !== 'custom') return GLM_ENDPOINT;
+    return (settings.endpoint || '').trim().replace(/\/+$/, '');
+  }
+  function validateSettings() {
+    if (settings.provider === 'custom' && !/chat\/completions$/.test(effectiveEndpoint())) {
+      return '自定义 API 地址必须以 /chat/completions 结尾（例如 https://…/v1/chat/completions），请检查是否粘贴了网页地址。';
+    }
+    return '';
+  }
+  function apiUrl() {
+    var ep = effectiveEndpoint();
+    if (settings.proxy && location.protocol.indexOf('http') === 0) {
+      return '/__api/chat/completions?up=' + encodeURIComponent(ep);
+    }
+    return ep;
+  }
+
+  function chatRaw(systemPrompt, userText, timeoutMs) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs || 30000);
+    return fetch(apiUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + settings.apiKey },
+      body: JSON.stringify({
+        model: settings.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userText }
+        ],
+        temperature: 0.2
+      }),
+      signal: ctrl.signal
+    }).then(function (res) {
+      if (!res.ok) {
+        return res.text().catch(function () { return ''; }).then(function (t) {
+          throw new Error('HTTP ' + res.status + (t ? '：' + t.slice(0, 200) : ''));
+        });
+      }
+      return res.json();
+    }).then(function (data) {
+      var content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+      if (!content) throw new Error('返回内容为空');
+      return content;
+    }).finally(function () { clearTimeout(timer); });
+  }
+
+  /* 权威语法条目库（v0.4.3）：已确认条目的释义/接续/级别以本地数据为准，强制覆盖模型输出。
+     来源：用户反馈沉淀（R7/R8/R10）。core 用于模糊匹配模型返回的条目名。 */
+  var GRAMMAR_DB = {
+    '〜以来': {
+      meaning: '…以后（自从…以来）', level: 'D-E',
+      note: '接续：動詞て形＋以来／名詞＋以来。不能接动词た形；后句须为持续性状态，不能用于未来。'
+    },
+    '〜以後': {
+      meaning: '…以后（书面语）', level: 'D-E',
+      note: '接续：名詞＋以後／動詞た形＋以後。注意与「〜以来」区分：た形接「以後」可以，接「以来」不行。'
+    },
+    '〜あまり（の）': {
+      meaning: '过于…（而）', level: 'A-C',
+      note: '接续：名詞＋の＋あまり／動詞る形＋あまり（に）。表示"因过度…而（导致）"。'
+    },
+    '〜上の': {
+      meaning: '…之上的（连体修饰）', level: 'A-C',
+      note: '接续：動詞た形／名詞＋の＋上の＋名詞。'
+    },
+    '〜上で': {
+      meaning: '…之后／在…基础上', level: 'A-C',
+      note: '接续：動詞た形＋上で／名詞＋の＋上で。表示"做完…之后再／在…基础上"。'
+    },
+    '〜上は': {
+      meaning: '既然…就（必须）', level: 'A-C',
+      note: '接续：動詞辞書形／た形＋上は。表示下决心或必然的推论。'
+    }
+  };
+  function grammarCore(s) { return String(s || '').replace(/[〜~\s（）()]/g, ''); }
+  function lookupGrammar(point) {
+    var s = grammarCore(point);
+    if (!s) return null;
+    var keys = Object.keys(GRAMMAR_DB);
+    for (var i = 0; i < keys.length; i++) {
+      var core = keys[i].replace(/[〜~]/g, '').replace(/（[^）]*）/g, '');
+      if (s.indexOf(core) !== -1) return { key: keys[i], db: GRAMMAR_DB[keys[i]] };
+    }
+    return null;
+  }
+  /* 考点与批改结论一致性（v0.4.3）：
+     ① 权威条目库命中 → 覆盖模型的 meaning/note/level 并归一条目名；
+     ② 被批改纠正的条目 → 考点标记 wrongUse（界面显示「本句用法有误」）；
+     ③ 纠正了条目但考点列表缺失 → 以权威数据补入。 */
+  function patchGrammarPoints(r) {
+    (r.grammar_points || []).forEach(function (g) {
+      var hit = lookupGrammar(g.point);
+      if (hit) {
+        g.point = hit.key;
+        g.meaning = hit.db.meaning;
+        g.note = hit.db.note;
+        g.level = hit.db.level;
+      }
+    });
+    (r.corrections || []).forEach(function (c) {
+      if (!c.grammar_point) return;
+      var hit = lookupGrammar(c.grammar_point);
+      if (!hit) return;
+      var gp = (r.grammar_points || []).find(function (g) {
+        var h = lookupGrammar(g.point);
+        return h && h.key === hit.key;
+      });
+      if (gp) {
+        gp.wrongUse = true;
+        gp.point = hit.key;
+        gp.fix = {
+          wrong: c.wrong || '',
+          right: c.right || '',
+          fixedSeg: (gp.segment && c.wrong && gp.segment.indexOf(c.wrong) !== -1 && c.right)
+            ? gp.segment.replace(c.wrong, c.right)
+            : (c.right || '')
+        };
+      } else {
+        (r.grammar_points = r.grammar_points || []).push({
+          segment: c.wrong || '', point: hit.key,
+          meaning: hit.db.meaning, level: hit.db.level, note: hit.db.note,
+          related: [], marked: false, wrongUse: true,
+          fix: { wrong: c.wrong || '', right: c.right || '', fixedSeg: c.right || '' }
+        });
+      }
+    });
+  }
+  var GRAMMAR_FACT_PROMPT = [
+    '你是日语语法事实核查员。给你一个句子和其中识别出的考点条目列表（条目名／中文释义／用法说明／级别），请逐条核查：条目名是否为规范语法条目名（J.TEST 考纲口径）、中文释义是否正确、用法说明是否符合规范接续、J.TEST 级别（A-C 中上级／D-E 初中级／F-G 入门级）是否合理。',
+    '只输出一个 JSON 对象：{"results":[…与输入条目同顺序、同数量…]}，每条格式：{"point":"规范条目名","meaning":"正确的中文释义","note":"正确的用法说明（必须以「接续：」开头）","level":"A-C|D-E|F-G","ok":true/false}，ok=false 表示原信息有误。',
+    '示例：句「仕事を辞めた以来、毎日履歴書を書いています。」条目{point:"〜以来",meaning:"做了…之后",note:"動詞た形＋以来",level:"F-G"} → ok=false, point:"〜以来", meaning:"…以后（自从…以来）", note:"接续：動詞て形＋以来／名詞＋以来。不能接动词た形；后句须为持续性状态。", level:"D-E"。',
+    '要求：只依据规范文法事实修正，不迁就原信息；确实判断不了的项目保持原值并 ok=true；results 顺序和数量必须与输入完全一致。'
+  ].join('\n');
+  function parseFactResults(content, expectLen) {
+    var obj = extractJson(content);
+    var arr = Array.isArray(obj.results) ? obj.results : [];
+    if (arr.length !== expectLen) throw new Error('事实核查条数不匹配');
+    return arr;
+  }
+  function applyFactChecks(r, results) {
+    (results || []).forEach(function (res, i) {
+      if (!res || res.ok) return;
+      var gp = (r.grammar_points || [])[i];
+      if (!gp) return;
+      var hit = lookupGrammar(res.point);
+      if (hit) {
+        gp.point = hit.key;
+        gp.meaning = hit.db.meaning;
+        gp.note = hit.db.note;
+        gp.level = hit.db.level;
+        return;
+      }
+      if (res.point) gp.point = res.point;
+      if (res.meaning) gp.meaning = res.meaning;
+      if (res.note) gp.note = res.note;
+      if (res.level && ['A-C', 'D-E', 'F-G'].indexOf(res.level) !== -1) gp.level = res.level;
+    });
+  }
+  function factCheckGrammar(r, sentence) {
+    var gps = r.grammar_points || [];
+    if (!gps.length) return Promise.resolve(null);
+    var payload = gps.map(function (g) {
+      return { point: g.point, meaning: g.meaning || '', note: g.note || '', level: g.level || '' };
+    });
+    return chatRaw(GRAMMAR_FACT_PROMPT, '句子：' + sentence + '\n条目列表：' + JSON.stringify(payload), 30000)
+      .then(function (content) { return parseFactResults(content, gps.length); })
+      .catch(function () { return null; });
+  }
+  function callLLM(sentence) {
+    return chatRaw(SYSTEM_PROMPT, sentence, 45000).then(function (content) {
+      var r = parseVerdict(content);
+      /* 接续复核流水线（v0.4.2）：
+         第一层：本地确定性硬规则——教科书级接续误用，不依赖模型，保证命中并自动修正；
+         第二层：软规则疑似片段 → 单目的专项校验调用（少样本，可靠性远高于大杂烩 Prompt）。 */
+      var hard = hardConjScan(sentence);
+      hard.forEach(function (h) {
+        var dup = r.corrections.some(function (c) { return c.wrong === h.wrong; });
+        if (!dup) r.corrections.push(h);
+      });
+      if (hard.length) r.verdict = 'wrong';
+      var soft = softConjScan(sentence).filter(function (f) {
+        return !r.corrections.some(function (c) { return c.wrong && c.wrong.indexOf(f.match) !== -1; });
+      });
+      /* 考点条目全量事实核查（与接续复核并行），之后统一权威覆盖＋一致性联动 */
+      var factP = factCheckGrammar(r, sentence);
+      var conjP = soft.length
+        ? verifyConjLLM(sentence, soft).catch(function () { return null; })
+        : Promise.resolve(null);
+      return Promise.all([factP, conjP]).then(function (out) {
+        var fact = out[0], conj = out[1];
+        if (conj) {
+          conj.forEach(function (res) {
+            if (res.ok) return;
+            var f0 = soft.find(function (f) { return f.match === res.match; });
+            var dup = r.corrections.some(function (c) { return c.wrong === res.match; });
+            if (!dup) {
+              r.corrections.push({
+                wrong: res.match,
+                right: res.fix || '',
+                full_correct: res.fix ? sentence.replace(res.match, res.fix) : '',
+                reason: res.reason || ('接续不符：「' + res.point + '」的规范接续应为' + (f0 ? f0.expect : '')),
+                tip: '',
+                grammar_point: res.point || '',
+                level: '',
+                error_type: '接续'
+              });
+            }
+            r.verdict = 'wrong';
+          });
+        } else if (soft.length) {
+          r.conjUnverified = soft;
+        }
+        if (fact) applyFactChecks(r, fact);
+        patchGrammarPoints(r);
+        return r;
+      });
+    });
+  }
+
+  /* 硬规则：不规范接续且修正方式形态确定（同词干交换）——保证命中 */
+  var HARD_CONJ_RULES = [
+    {
+      point: '〜以来',
+      re: /([ただ])以来/g,
+      swap: { 'た': 'て', 'だ': 'で' },
+      reason: '「〜以来」接续动词て形或名词（N＋以来），不能接动词た形。',
+      tip: '记「Vて＋以来＝自从…以来」：辞めて以来／来て以来／卒業以来；た形接「以来」是典型误用。'
+    }
+  ];
+  /* 软规则：高频接续误用模式——只标记，交给专项校验判断 */
+  var SOFT_CONJ_RULES = [
+    { point: '〜たびに', re: /[ただ]たびに/, expect: '動詞辞書形／名詞の＋たびに' },
+    { point: '〜次第（动词）', re: /[ただ]次第/, expect: '動詞ます形（去ます）＋次第' },
+    { point: '〜がたい', re: /[ただ]がたい/, expect: '動詞ます形＋がたい' },
+    { point: '〜つつ', re: /[ただ]つつ/, expect: '動詞ます形＋つつ' },
+    { point: '〜きる', re: /[ただ]きる/, expect: '動詞ます形＋きる' },
+    { point: '〜がち', re: /[ただ]がち/, expect: '動詞ます形／名詞＋がち' },
+    { point: '〜以来', re: /の以来/, expect: '動詞て形／名詞＋以来（动词＋の＋以来为误用）' }
+  ];
+  function hardConjScan(text) {
+    var out = [];
+    HARD_CONJ_RULES.forEach(function (rule) {
+      rule.re.lastIndex = 0;
+      var m;
+      while ((m = rule.re.exec(text)) !== null) {
+        var tail = m[0];
+        var fixed = rule.swap[m[1]] + tail.slice(1);
+        out.push({
+          wrong: tail,
+          right: fixed,
+          full_correct: text.replace(tail, fixed),
+          reason: rule.reason,
+          tip: rule.tip,
+          grammar_point: rule.point,
+          level: 'D-E',
+          error_type: '接续'
+        });
+        if (rule.re.lastIndex === m.index) rule.re.lastIndex++;
+      }
+    });
+    return out;
+  }
+  function softConjScan(text) {
+    var out = [];
+    SOFT_CONJ_RULES.forEach(function (rule) {
+      var m = text.match(rule.re);
+      if (m) out.push({ match: m[0], point: rule.point, expect: rule.expect });
+    });
+    return out;
+  }
+  var CONJ_VERIFY_PROMPT = [
+    '你是日语动词接续审查员。给你一个句子和其中若干"疑似接续问题"片段，逐个判断其接续是否符合该语法条目的规范接续。',
+    '只输出一个 JSON 对象：{"results":[{"match":"原文片段","point":"条目名","ok":true,"fix":"","reason":""}]}（不合规时 ok=false 并在 fix 给出修正片段，reason 一句话中文依据）。',
+    '示例1：句「日本へ来た以来、毎日日記を書いている」，片段「た以来」（〜以来）→ ok=false, fix="て以来"（〜以来 接 Vて形/名詞）。',
+    '示例2：句「日本へ来て以来、毎日日記を書いている」，片段「て以来」→ ok=true。',
+    '判断依据只看接续形态，不管语义通顺；拿不准时 ok=true（宁漏勿误）。'
+  ].join('\n');
+  function verifyConjLLM(text, flags) {
+    var user = '句子：' + text + '\n疑似片段：' + flags.map(function (f) {
+      return '「' + f.match + '」（条目 ' + f.point + '，规范接续应为 ' + f.expect + '）';
+    }).join('；');
+    return chatRaw(CONJ_VERIFY_PROMPT, user, 30000).then(function (content) {
+      var obj = extractJson(content);
+      return Array.isArray(obj.results) ? obj.results : [];
+    });
+  }
+
+  /* ---------- 高亮渲染 ---------- */
+  function highlightHtml(text, cors) {
+    var marks = [];
+    cors.forEach(function (c, idx) {
+      if (!c.wrong) return;
+      var pos = text.indexOf(c.wrong);
+      while (pos !== -1) {
+        var overlap = marks.some(function (m) { return pos < m.end && pos + c.wrong.length > m.start; });
+        if (!overlap) { marks.push({ start: pos, end: pos + c.wrong.length, idx: idx }); return; }
+        pos = text.indexOf(c.wrong, pos + 1);
+      }
+    });
+    marks.sort(function (a, b) { return a.start - b.start; });
+    var html = '', cur = 0;
+    marks.forEach(function (m) {
+      html += escapeHtml(text.slice(cur, m.start));
+      html += '<mark class="hl-err">' + escapeHtml(text.slice(m.start, m.end)) + '</mark>';
+      cur = m.end;
+    });
+    html += escapeHtml(text.slice(cur));
+    return html;
+  }
+
+  function badgesHtml(rec) {
+    var out = '';
+    rec.corrections.forEach(function (c) {
+      if (c.grammar_point) out += '<span class="badge">' + escapeHtml(c.grammar_point) + '</span>';
+      if (c.level) out += '<span class="badge level">' + escapeHtml(c.level) + '</span>';
+      if (c.error_type) out += '<span class="badge etype">' + escapeHtml(c.error_type) + '</span>';
+    });
+    return out;
+  }
+
+  function gpChipHtml(rec, g, i) {
+    var tip = [g.meaning, g.note].filter(Boolean).join('｜');
+    var segHtml;
+    if (g.wrongUse && g.fix && g.fix.fixedSeg) {
+      segHtml = '<span class="gp-seg" style="text-decoration:line-through;text-decoration-color:var(--red);opacity:.7">' + escapeHtml(g.segment) + '</span>' +
+        '<span class="gp-seg" style="color:var(--green)">' + escapeHtml(g.fix.fixedSeg) + '</span>';
+    } else {
+      segHtml = '<span class="gp-seg">' + escapeHtml(g.segment) + '</span>';
+    }
+    return '<button type="button" class="gp' + (g.marked ? ' marked' : '') +
+      '" data-id="' + escapeHtml(rec.id) + '" data-gp="' + i + '" title="' + escapeHtml(tip) + '">' +
+      segHtml +
+      '<span class="gp-name">' + escapeHtml(g.point) + (g.level ? ' · ' + g.level : '') + (g.meaning ? '<br><span style="font-weight:400;font-size:12px;opacity:.85">' + escapeHtml(g.meaning) + '</span>' : '') + '</span>' +
+      (g.wrongUse ? '<span style="font-size:12px;color:var(--red);font-weight:600">⚠ 本句用法有误</span>' : '') +
+      '<span class="gp-flag">' + (g.marked ? '✓ 已标记' : '标记') + '</span>' +
+      '</button>';
+  }
+
+  function grammarBlockHtml(rec) {
+    if (!rec.grammar_points || !rec.grammar_points.length) return '';
+    return '<div class="gp-block"><h3>考点语法（点击标记进笔记）</h3><div class="gp-list">' +
+      rec.grammar_points.map(function (g, i) { return gpChipHtml(rec, g, i); }).join('') +
+      '</div></div>';
+  }
+
+  function correctionsHtml(rec) {
+    if (!rec.corrections.length) return '';
+    var out = '';
+    rec.corrections.forEach(function (c, i) {
+      out += '<div class="corr">' +
+        '<div class="chg">❌ ' + escapeHtml(c.wrong || '（未定位）') + '<span class="arr">→</span><span class="fixed-part">✅ ' + escapeHtml(c.right || '') + '</span></div>' +
+        '<dl>' +
+        '<dt>原因</dt><dd>' + escapeHtml(c.reason) + '</dd>' +
+        '<dt>避免</dt><dd>' + escapeHtml(c.tip) + '</dd>' +
+        (c.full_correct ? '<dt>整句</dt><dd>' + escapeHtml(c.full_correct) + '</dd>' : '') +
+        '</dl></div>';
+    });
+    return out;
+  }
+
+  var currentResultId = null;
+  function renderResult(rec) {
+    currentResultId = rec.id;
+    var area = $('result-area');
+    var v = rec.verdict;
+    var head = '<div class="verdict ' + v + '">' + VERDICT_TEXT[v] +
+      (v === 'correct' ? ' —— 语法无误，继续保持' : v === 'unnatural' ? ' —— 不算错，但有更地道的说法' : ' —— 存在语法错误') + '</div>';
+    var body = '<div class="card">' +
+      '<h2>批改结果</h2>' +
+      '<p class="sentence">' + highlightHtml(rec.text, rec.corrections) + '</p>' +
+      (badgesHtml(rec) ? '<div style="margin-bottom:6px">' + badgesHtml(rec) + '</div>' : '') +
+      grammarBlockHtml(rec) +
+      correctionsHtml(rec) +
+      (rec.conjUnverified && rec.conjUnverified.length
+        ? '<p class="fix-note" style="color:var(--yellow)">⚠ 接续疑似问题未能自动复核（网络原因）：' +
+          rec.conjUnverified.map(function (f) { return escapeHtml(f.match + '（' + f.point + '）'); }).join('、') + '。可点「重新批改」复查。</p>'
+        : '') +
+      (rec.translation ? '<p class="translation">译文：' + escapeHtml(rec.translation) + '</p>' : '') +
+      '<p class="fix-note">已自动存入句库' + (rec.demo ? '（演示数据）' : '') + '。</p>' +
+      '<div class="row" style="margin-top:10px">' +
+      '<button type="button" id="btn-reproof" class="plain">重新批改</button>' +
+      '<button type="button" id="btn-feedback" class="plain">反馈漏判/误判</button>' +
+      (rec.reproofs ? '<span class="badge">已复核 ' + rec.reproofs + ' 次</span>' : '') +
+      (rec.feedback ? '<span class="badge" style="background:var(--red-bg);color:var(--red)">已反馈·' + escapeHtml(rec.feedback.type) + '</span>' : '') +
+      '</div>' +
+      '</div>';
+    var next = '<div class="next-row">' +
+      '<button type="button" class="primary" id="btn-next">下一句 ▸</button>' +
+      '<span class="hint">本句已保存 · 点击进入下一句练习</span>' +
+      '</div>';
+    area.innerHTML = '<div class="result-wrap">' + head + body + next + '</div>';
+    area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ---------- 下一句 / 重新批改 / 反馈 ---------- */
+  var pendingFbType = null;
+  function findCurrentRec() {
+    for (var i = 0; i < sentences.length; i++) {
+      if (sentences[i].id === currentResultId) return sentences[i];
+    }
+    return null;
+  }
+  $('result-area').addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.closest('#btn-next')) { archiveNext(); return; }
+    if (t.closest('#btn-reproof')) { reproofCurrent(); return; }
+    if (t.closest('#btn-feedback')) { openFeedbackForm(); return; }
+    if (t.classList && t.classList.contains('fb-type')) {
+      pendingFbType = t.getAttribute('data-t');
+      document.querySelectorAll('.fb-type').forEach(function (b) {
+        b.style.borderColor = b === t ? 'var(--primary)' : 'var(--border)';
+        b.style.color = b === t ? 'var(--primary)' : 'var(--text)';
+      });
+      return;
+    }
+    if (t.closest('#fb-save')) { saveFeedback(); return; }
+    if (t.closest('#fb-cancel')) { var f = $('fb-form'); if (f) f.remove(); return; }
+  });
+
+  function archiveNext() {
+    var wrap = $('result-area').querySelector('.result-wrap');
+    if (!wrap || wrap.classList.contains('archiving')) return;
+    wrap.classList.add('archiving');
+    var input = $('sentence-input');
+    var st = $('submit-status');
+    setTimeout(function () {
+      $('result-area').innerHTML = '';
+      input.value = '';
+      st.className = 'status';
+      st.textContent = '✓ 上一句已存入句库，输入下一句继续。';
+      input.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 560);
+  }
+
+  function reproofCurrent() {
+    var rec = findCurrentRec();
+    var st = $('submit-status');
+    if (!rec) return;
+    if (rec.demo) { st.className = 'status err'; st.textContent = '演示数据不支持重新批改，请提交真实句子。'; return; }
+    if (!settings.apiKey) { st.className = 'status err'; st.textContent = '重新批改需要 API Key：请到「设置」配置。'; return; }
+    var btn = $('btn-reproof');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = '重新批改中…';
+    st.className = 'status'; st.textContent = '重新批改中…（会以更严格的接续核对规则复查）';
+    callLLM(rec.text).then(function (r) {
+      var oldMarks = {};
+      (rec.grammar_points || []).forEach(function (g) { if (g.marked && g.point) oldMarks[g.point] = true; });
+      (r.grammar_points || []).forEach(function (g) { if (oldMarks[g.point]) g.marked = true; });
+      rec.verdict = r.verdict;
+      rec.corrections = r.corrections;
+      rec.grammar_points = r.grammar_points;
+      rec.translation = r.translation;
+      rec.conjUnverified = r.conjUnverified || [];
+      rec.reproofs = (rec.reproofs || 0) + 1;
+      if (rec.verdict === 'wrong') ingestSentence(errStore, errByKey(), rec);
+      save('gd_sentences', sentences);
+      saveErr();
+      updateErrTab();
+      st.textContent = '';
+      renderResult(rec);
+    }).catch(function (err) {
+      st.className = 'status err';
+      st.textContent = '重新批改失败：' + (err && err.message ? err.message : '未知错误');
+      if (btn) { btn.disabled = false; btn.textContent = '重新批改'; }
+    });
+  }
+
+  function openFeedbackForm() {
+    var rec = findCurrentRec();
+    if (!rec) return;
+    if ($('fb-form')) return;
+    pendingFbType = null;
+    $('result-area').insertAdjacentHTML('beforeend',
+      '<div class="card" id="fb-form">' +
+      '<h2>反馈批改问题（帮助改进批改质量）</h2>' +
+      '<div class="row" style="margin-top:0">' +
+      '<button type="button" class="plain fb-type" data-t="漏判">漏判（有错没指出）</button>' +
+      '<button type="button" class="plain fb-type" data-t="误判">误判（没错却说有错）</button>' +
+      '</div>' +
+      '<textarea id="fb-note" placeholder="补充说明（选填）。如：〜以来 应接动词て形，「辞めた以来」应为「辞めて以来」" style="width:100%;min-height:64px;margin-top:8px;padding:9px 12px;font-size:15px;border:1px solid var(--border);border-radius:8px;resize:vertical;font-family:inherit"></textarea>' +
+      '<div class="row"><button type="button" class="primary" id="fb-save">提交反馈</button>' +
+      '<button type="button" class="plain" id="fb-cancel">取消</button></div>' +
+      '</div>');
+    $('fb-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function saveFeedback() {
+    var rec = findCurrentRec();
+    if (!rec) return;
+    if (!pendingFbType) { alert('请先选择反馈类型：漏判或误判。'); return; }
+    rec.feedback = { type: pendingFbType, note: ($('fb-note').value || '').trim(), at: Date.now() };
+    save('gd_sentences', sentences);
+    var f = $('fb-form');
+    if (f) f.remove();
+    renderResult(rec);
+    var st = $('submit-status');
+    st.className = 'status';
+    st.textContent = '已记录反馈（' + pendingFbType + '）。这类反馈将用于持续改进批改规则。';
+  }
+
+  /* ---------- 提交流程 ---------- */
+  var submitting = false;
+  function updateLibTab() {
+    var btn = document.querySelector('.tabs [data-tab="library"]');
+    if (btn) btn.textContent = sentences.length ? '句库 · ' + sentences.length : '句库';
+  }
+  function finishSubmit(rec, demo) {
+    rec.id = 's' + Date.now() + Math.floor(Math.random() * 1000);
+    rec.created_at = Date.now();
+    rec.demo = !!demo;
+    sentences.unshift(rec);
+    save('gd_sentences', sentences);
+    ingestSentence(errStore, errByKey(), rec);
+    saveErr();
+    renderResult(rec);
+    updateLibTab();
+    updateErrTab();
+  }
+
+  $('btn-submit').addEventListener('click', function () {
+    var text = $('sentence-input').value.trim();
+    var st = $('submit-status');
+    if (!text) { st.className = 'status err'; st.textContent = '请先输入一句日语。'; return; }
+    if (text.length > 300) { st.className = 'status err'; st.textContent = '句子过长（>300 字符），请一次只提交一句。'; return; }
+    if (!settings.apiKey) { st.className = 'status err'; st.textContent = '尚未配置 API Key：请到「设置」填写，或点「演示结果」体验。'; return; }
+    var vErr = validateSettings();
+    if (vErr) { st.className = 'status err'; st.textContent = vErr; return; }
+    if (submitting) return;
+    submitting = true;
+    $('btn-submit').disabled = true;
+    st.className = 'status'; st.textContent = '校对中…（含接续复核两段检查，通常 5~15 秒）';
+    callLLM(text).then(function (r) {
+      st.textContent = '';
+      finishSubmit({ text: text, verdict: r.verdict, translation: r.translation, corrections: r.corrections, grammar_points: r.grammar_points, conjUnverified: r.conjUnverified || [] }, false);
+    }).catch(function (err) {
+      var msg = err.name === 'AbortError' ? '请求超时（30 秒），请检查网络后重试。' :
+        '校对失败：' + (err && err.message ? err.message : '未知错误') +
+        (err && err.name === 'TypeError'
+          ? '\n提示：网络/CORS 失败——请确认本地服务 serve.ps1 正在运行（本地转发已开启时），或到「设置」调整。'
+          : '\n提示：401/403 为 Key 无效；其他错误请查看返回信息。');
+      st.className = 'status err'; st.textContent = msg;
+    }).finally(function () {
+      submitting = false;
+      $('btn-submit').disabled = false;
+    });
+  });
+
+  $('sentence-input').addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); $('btn-submit').click(); }
+  });
+
+  /* ---------- 演示模式 ---------- */
+  var DEMO_INPUT = '私は毎日学校へ行くとき、バスを乗ります。';
+  var DEMO_RESULT = {
+    verdict: 'wrong',
+    translation: '我每天去学校时坐公交车。',
+    grammar_points: [
+      { segment: '毎日', point: '毎日', meaning: '每天（频率）', level: 'F-G', note: '频率词修饰动词，表示"每天"重复发生。', related: ['いつも', 'たびに'] },
+      { segment: '学校へ行くとき', point: '〜とき（动词辞书形＋とき）', meaning: '…的时候', level: 'D-E', note: '前接动词辞书形，表示"做…的时候"。', related: ['〜頃', '〜間に'] },
+      { segment: 'バスに乗ります', point: '〜に乗る', meaning: '乘坐（交通工具）', level: 'F-G', note: '乗り物＋に＋乗る。', related: ['〜を降りる', '〜で行く'] }
+    ],
+    corrections: [{
+      wrong: 'を',
+      right: 'に',
+      full_correct: '私は毎日学校へ行くとき、バスに乗ります。',
+      reason: '移动动词「乗る」表示“乘坐”时，乘具用「に」标记（表示落脚点）；「を」用于标记动作的直接对象（如 映画を見る）。',
+      tip: '记住口诀「乗り物＋に＋乗る」：電車に乗る／飛行機に乗る；不要类推成「バスを乗る」。',
+      grammar_point: '乗り物に乗る（乘坐交通工具）',
+      level: 'F-G',
+      error_type: '助词误用'
+    }]
+  };
+  $('btn-demo').addEventListener('click', function () {
+    $('sentence-input').value = DEMO_INPUT;
+    finishSubmit({
+      text: DEMO_INPUT,
+      verdict: DEMO_RESULT.verdict,
+      translation: DEMO_RESULT.translation,
+      corrections: JSON.parse(JSON.stringify(DEMO_RESULT.corrections)),
+      grammar_points: JSON.parse(JSON.stringify(DEMO_RESULT.grammar_points))
+    }, true);
+    $('submit-status').className = 'status'; $('submit-status').textContent = '已载入演示结果（未调用 API）。';
+  });
+
+  /* ---------- 句库 ---------- */
+  var curFilter = 'all';
+  function libGrammarPoints() {
+    var set = {};
+    sentences.forEach(function (rec) {
+      (rec.corrections || []).forEach(function (c) { if (c.grammar_point) set[c.grammar_point] = 1; });
+      (rec.grammar_points || []).forEach(function (g) { if (g.point) set[g.point] = 1; });
+    });
+    return Object.keys(set).sort();
+  }
+  function renderLibrary() {
+    var counts = { all: sentences.length, wrong: 0, unnatural: 0, correct: 0 };
+    sentences.forEach(function (s) { counts[s.verdict]++; });
+    $('lib-stats').textContent = '共 ' + counts.all + ' 句 · 有误 ' + counts.wrong + ' · 不自然 ' + counts.unnatural + ' · 正确 ' + counts.correct;
+    var kw = ($('lib-search').value || '').trim();
+    var gp = $('lib-gp').value || '';
+    var list = sentences.filter(function (s) {
+      if (curFilter !== 'all' && s.verdict !== curFilter) return false;
+      if (kw && s.text.indexOf(kw) === -1) return false;
+      if (gp) {
+        var hit = false;
+        (s.corrections || []).forEach(function (c) { if (c.grammar_point === gp) hit = true; });
+        (s.grammar_points || []).forEach(function (g) { if (g.point === gp) hit = true; });
+        if (!hit) return false;
+      }
+      return true;
+    });
+    var sel = $('lib-gp');
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">全部语法点</option>' +
+      libGrammarPoints().map(function (p) {
+        return '<option value="' + escapeHtml(p) + '"' + (p === cur ? ' selected' : '') + '>' + escapeHtml(p) + '</option>';
+      }).join('');
+    var box = $('lib-list');
+    if (!list.length) {
+      box.innerHTML = '<p class="hint">暂无记录。去「校对练习」提交第一句吧。</p>';
+      return;
+    }
+    var html = '';
+    list.forEach(function (rec) {
+      var hasDetail = rec.corrections.length > 0 || rec.translation || (rec.grammar_points && rec.grammar_points.length > 0);
+      html += '<div class="rec" data-id="' + escapeHtml(rec.id) + '">' +
+        '<div class="head">' +
+        '<span class="v ' + rec.verdict + '">' + VERDICT_TEXT[rec.verdict] + '</span>' +
+        (rec.demo ? '<span class="badge">演示</span>' : '') +
+        (rec.feedback ? '<span class="badge" style="background:var(--red-bg);color:var(--red)">已反馈·' + escapeHtml(rec.feedback.type) + '</span>' : '') +
+        (rec.reproofs ? '<span class="badge">复核' + rec.reproofs + '</span>' : '') +
+        '<time>' + fmtTime(rec.created_at) + '</time>' +
+        '</div>' +
+        '<p class="sentence" style="margin:6px 0 2px">' + highlightHtml(rec.text, rec.corrections) + '</p>' +
+        (badgesHtml(rec) ? '<div>' + badgesHtml(rec) + '</div>' : '') +
+        '<div class="row" style="margin-top:6px">' +
+        (hasDetail ? '<button class="toggle" type="button">展开详情</button>' : '') +
+        '<button class="del" type="button">删除</button>' +
+        '</div>' +
+        '<div class="body">' + correctionsHtml(rec) + grammarBlockHtml(rec) +
+        (rec.translation ? '<p class="translation">译文：' + escapeHtml(rec.translation) + '</p>' : '') + '</div>' +
+        '</div>';
+    });
+    box.innerHTML = html;
+  }
+
+  $('lib-filters').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-f]');
+    if (!btn) return;
+    curFilter = btn.getAttribute('data-f');
+    $('lib-filters').querySelectorAll('button').forEach(function (b) {
+      b.classList.toggle('active', b === btn);
+    });
+    renderLibrary();
+  });
+
+  $('lib-search').addEventListener('input', renderLibrary);
+  $('lib-gp').addEventListener('change', renderLibrary);
+
+  $('lib-list').addEventListener('click', function (e) {
+    var recEl = e.target.closest('.rec');
+    if (!recEl) return;
+    var id = recEl.getAttribute('data-id');
+    if (e.target.classList.contains('toggle')) {
+      recEl.classList.toggle('open');
+      e.target.textContent = recEl.classList.contains('open') ? '收起详情' : '展开详情';
+    } else if (e.target.classList.contains('del')) {
+      if (!confirm('删除这条记录？删除后不可恢复。')) return;
+      sentences = sentences.filter(function (s) { return s.id !== id; });
+      save('gd_sentences', sentences);
+      renderLibrary();
+      updateLibTab();
+      $('lib-status').textContent = '已删除 1 条记录。';
+    }
+  });
+
+  /* ---------- 考点标记（全局委托：结果区 / 句库详情 / 笔记页通用） ---------- */
+  document.addEventListener('click', function (e) {
+    var chip = e.target.closest('.gp');
+    if (!chip) return;
+    var id = chip.getAttribute('data-id');
+    var gi = parseInt(chip.getAttribute('data-gp'), 10);
+    var rec = null;
+    for (var i = 0; i < sentences.length; i++) {
+      if (sentences[i].id === id) { rec = sentences[i]; break; }
+    }
+    if (!rec || !rec.grammar_points || !rec.grammar_points[gi]) return;
+    var g = rec.grammar_points[gi];
+    g.marked = !g.marked;
+    save('gd_sentences', sentences);
+    document.querySelectorAll('.gp[data-id="' + id + '"][data-gp="' + gi + '"]').forEach(function (b) {
+      b.classList.toggle('marked', g.marked);
+      var f = b.querySelector('.gp-flag');
+      if (f) f.textContent = g.marked ? '✓ 已标记' : '标记';
+    });
+    if (!$('panel-notes').hidden) renderNotes();
+  });
+
+  /* ---------- 语法笔记：按标记的考点归纳 ---------- */
+  function renderNotes() {
+    var groups = {}, order = [];
+    sentences.forEach(function (rec) {
+      (rec.grammar_points || []).forEach(function (g) {
+        if (!g.marked || !g.point) return;
+        if (!groups[g.point]) {
+          groups[g.point] = { point: g.point, meaning: g.meaning || '', level: g.level || '', note: g.note || '', related: [], items: [] };
+          order.push(g.point);
+        }
+        var gr = groups[g.point];
+        if (g.level && !gr.level) gr.level = g.level;
+        if (g.meaning && !gr.meaning) gr.meaning = g.meaning;
+        (g.related || []).forEach(function (r) { if (gr.related.indexOf(r) === -1) gr.related.push(r); });
+        gr.items.push({ rec: rec, seg: g.segment, fix: g.fix || null, wrongUse: !!g.wrongUse });
+      });
+    });
+    var arr = order.map(function (k) { return groups[k]; });
+    arr.sort(function (a, b) { return b.items.length - a.items.length; });
+    var totalMarks = arr.reduce(function (n, g) { return n + g.items.length; }, 0);
+    $('notes-stats').textContent = arr.length
+      ? '共标记 ' + totalMarks + ' 处 · 覆盖 ' + arr.length + ' 个语法点'
+      : '暂无标记。在批改结果或句库详情中点击考点语法条目即可标记。';
+    if (!arr.length) { $('notes-list').innerHTML = ''; renderClusters([]); return; }
+    var html = '';
+    arr.forEach(function (g) {
+      html += '<div class="rec">' +
+        '<div class="head"><span class="v" style="color:var(--primary)">' + escapeHtml(g.point) + '</span>' +
+        (g.meaning ? '<span class="badge">' + escapeHtml(g.meaning) + '</span>' : '') +
+        (g.level ? '<span class="badge level">' + escapeHtml(g.level) + '</span>' : '') +
+        '<span class="badge">标记 ' + g.items.length + ' 次</span></div>' +
+        (g.note ? '<p class="fix-note" style="margin:4px 0 2px">' + escapeHtml(g.note) + '</p>' : '') +
+        (g.related.length ? '<p class="hint" style="margin:2px 0 6px">易混：' + g.related.map(function (r) { return escapeHtml(r); }).join('・') + '</p>' : '') +
+        g.items.map(function (it) {
+          var segHtml;
+          if (it.wrongUse && it.fix && it.fix.fixedSeg) {
+            segHtml = '<span class="gp-seg" style="text-decoration:line-through;text-decoration-color:var(--red);opacity:.7">' + escapeHtml(it.seg) + '</span>' +
+              '<span class="gp-seg" style="color:var(--green)">' + escapeHtml(it.fix.fixedSeg) + '</span>';
+          } else {
+            segHtml = '<span class="gp-seg">' + escapeHtml(it.seg) + '</span>';
+          }
+          return '<div class="note-item">' +
+            segHtml +
+            '<span class="note-sent">' + escapeHtml(it.rec.text) + '</span>' +
+            '<time>' + fmtTime(it.rec.created_at) + '</time>' +
+            '</div>';
+        }).join('') +
+        '</div>';
+    });
+    $('notes-list').innerHTML = html;
+    renderClusters(arr.map(function (g) { return g.point; }));
+  }
+
+  /* ---------- 相似语法归纳与辨析 ---------- */
+  var COMPARE_PROMPT = [
+    '你是日语语法辨析老师，精通 J.TEST 考纲。用户给出若干个相近或易混的日语语法条目，请逐一辨析。',
+    '只输出一个 JSON 对象，格式：',
+    '{"rows":[{"point":"条目名","meaning":"中文意思","conn":"接续方式","diff":"与其他条目的核心区别（中文，要具体对比，不要泛泛而谈）","example":"一个简短日文例句＋中文翻译"}]}',
+    'rows 顺序与用户给出的条目一致；若某条目不存在请原样保留并在 meaning 中说明。'
+  ].join('\n');
+  function normPoint(s) { return String(s || '').replace(/[〜~\s]/g, ''); }
+  function lcsOf(a, b) {
+    var best = '';
+    for (var i = 0; i < a.length; i++) {
+      for (var j = i + 1; j <= a.length; j++) {
+        var s = a.slice(i, j);
+        if (s.length > best.length && b.indexOf(s) !== -1) best = s;
+      }
+    }
+    return best;
+  }
+  function shareCore(a, b) {
+    var core = lcsOf(a, b);
+    if (!core) return false;
+    var isKanji = /[\u4e00-\u9faf]/.test(core);
+    return core.length >= (isKanji ? 1 : 2);
+  }
+  function commonCore(list) {
+    var shortest = list.slice().sort(function (a, b) { return a.length - b.length; })[0];
+    var a = normPoint(shortest);
+    for (var len = a.length; len >= 1; len--) {
+      for (var i = 0; i + len <= a.length; i++) {
+        var s = a.slice(i, i + len);
+        if (list.every(function (p) { return normPoint(p).indexOf(s) !== -1; })) return s;
+      }
+    }
+    return '';
+  }
+  function clusterPoints(points) {
+    var parent = points.map(function (_, i) { return i; });
+    function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+    for (var i = 0; i < points.length; i++) {
+      for (var j = i + 1; j < points.length; j++) {
+        if (normPoint(points[i]) === normPoint(points[j]) || shareCore(normPoint(points[i]), normPoint(points[j]))) {
+          var a = find(i), b = find(j);
+          if (a !== b) parent[b] = a;
+        }
+      }
+    }
+    var groups = {};
+    points.forEach(function (p, i) {
+      var r = find(i);
+      (groups[r] = groups[r] || []).push(p);
+    });
+    return Object.keys(groups).map(function (k) { return groups[k]; })
+      .filter(function (g) { return g.length >= 2; });
+  }
+  function renderClusters(points) {
+    var clusters = clusterPoints(points);
+    $('cmp-stats').textContent = clusters.length
+      ? '在已标记的语法点中发现 ' + clusters.length + ' 组形近/义近语法'
+      : '暂未发现可聚类的相似语法（标记更多语法点后自动归纳，如「〜上で／〜上の／〜上は」）。';
+    var html = clusters.map(function (c, i) {
+      return '<div class="rec" style="margin-bottom:10px">' +
+        '<div class="head"><span class="v" style="color:var(--primary)">' + escapeHtml(commonCore(c) || '相关') + ' 系列</span></div>' +
+        '<div style="margin:6px 0">' + c.map(function (p) { return '<span class="badge level">' + escapeHtml(p) + '</span>'; }).join('') + '</div>' +
+        '<button class="cmp-go" data-list="' + escapeHtml(c.join('｜')) + '" type="button" style="border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer">AI 辨析对比</button>' +
+        '</div>';
+    }).join('');
+    $('cmp-clusters').innerHTML = html;
+  }
+  function compareCacheKey(list) { return list.slice().sort().join('｜'); }
+  function parseCompare(content) {
+    var obj = extractJson(content);
+    var rows = Array.isArray(obj.rows) ? obj.rows : [];
+    return rows.map(function (r) {
+      return {
+        point: r.point || '', meaning: r.meaning || '',
+        conn: r.conn || '', diff: r.diff || '', example: r.example || ''
+      };
+    });
+  }
+  function compareTableHtml(rows, cached) {
+    return (cached ? '<p class="hint" style="margin:0 0 4px">（本机缓存，生成于 ' + fmtTime(cached) + '）</p>' : '') +
+      '<div class="table-responsive"><table class="cmp" aria-label="语法辨析对比"><thead><tr>' +
+      '<th>条目</th><th>意思</th><th>接续</th><th>核心区别</th><th>例句</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr><td><strong>' + escapeHtml(r.point) + '</strong></td><td>' + escapeHtml(r.meaning) +
+          '</td><td>' + escapeHtml(r.conn) + '</td><td>' + escapeHtml(r.diff) + '</td><td>' + escapeHtml(r.example) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  function runCompare(list) {
+    var box = $('cmp-result');
+    if (list.length < 2 || list.length > 4) {
+      box.innerHTML = '<p class="status err">请提供 2~4 个语法条目进行辨析。</p>';
+      return;
+    }
+    if (!settings.apiKey) {
+      box.innerHTML = '<p class="status err">尚未配置 API Key：请到「设置」填写后再使用 AI 辨析。</p>';
+      return;
+    }
+    var cache = load('gd_compare', {});
+    var key = compareCacheKey(list);
+    if (cache[key]) {
+      box.innerHTML = compareTableHtml(cache[key].rows, cache[key].at);
+      return;
+    }
+    box.innerHTML = '<p class="status">辨析生成中…（通常 3~10 秒）</p>';
+    chatRaw(COMPARE_PROMPT, list.join('、'), 60000).then(function (content) {
+      var rows = parseCompare(content);
+      if (!rows.length) throw new Error('辨析结果为空');
+      cache[key] = { at: Date.now(), rows: rows };
+      save('gd_compare', cache);
+      box.innerHTML = compareTableHtml(rows);
+    }).catch(function (err) {
+      box.innerHTML = '<p class="status err">辨析失败：' + (err && err.message ? err.message : '未知错误') + '</p>';
+    });
+  }
+  $('cmp-clusters').addEventListener('click', function (e) {
+    var btn = e.target.closest('.cmp-go');
+    if (!btn) return;
+    runCompare(btn.getAttribute('data-list').split('｜'));
+  });
+  $('cmp-run').addEventListener('click', function () {
+    var list = ($('cmp-input').value || '').split(/[,，、]/).map(function (s) { return s.trim(); }).filter(Boolean);
+    runCompare(list);
+  });
+
+  /* ---------- M2：错误本数据层（口径见 PRD §1.4） ---------- */
+  var DISTRACTOR_BANK = {
+    '助词误用': ['に', 'を', 'で', 'へ', 'が', 'と', 'から', 'まで', 'より', 'は'],
+    '动词变形': ['して', 'した', 'する', 'している', 'された', 'させて', 'られる', 'しない'],
+    '接続': ['て', 'た', 'ない', 'ば', 'たら', 'ながら', 'ので', 'のに', 'けれど'],
+    '时态・体': ['している', 'した', 'する', 'していた', 'してしまう', 'しておく'],
+    '敬语': ['なさいます', 'します', 'されます', 'いたします', 'おっしゃいます'],
+    '惯用搭配': [], '语序': [], '其他': []
+  };
+  function normAns(s) {
+    return String(s == null ? '' : s).trim().replace(/[\s。、．，,．!！?？·「」]/g, '');
+  }
+  function errKey(c) {
+    return c.grammar_point || ((c.error_type || '其他') + '｜' + (c.wrong || ''));
+  }
+  function ingestSentence(st, byKey, rec) {
+    if (rec.verdict !== 'wrong' || !rec.corrections || !rec.corrections.length) return;
+    if (!rec._ingestedKeys) rec._ingestedKeys = {};
+    var seen = {};
+    rec.corrections.forEach(function (c) {
+      var k = errKey(c);
+      if (seen[k] || rec._ingestedKeys[k]) return;
+      seen[k] = 1;
+      rec._ingestedKeys[k] = 1;
+      var it = byKey[k];
+      if (!it) {
+        it = byKey[k] = {
+          key: k,
+          point: c.grammar_point || c.error_type || '未命名语法点',
+          level: c.level || '',
+          error_type: c.error_type || '',
+          appear: 0, wrong: 0,
+          lastSeenRound: 0, lastTestedAt: null,
+          manualMastered: false,
+          examples: []
+        };
+        st.items.push(it);
+      }
+      it.appear++; it.wrong++;
+      it.level = c.level || it.level;
+      it.error_type = c.error_type || it.error_type;
+      it.examples.unshift({
+        sid: rec.id, text: rec.text,
+        wrongSeg: c.wrong || '', right: c.right || '',
+        accepted: Array.isArray(c.accepted) ? c.accepted.slice() : [],
+        full: c.full_correct || '', reason: c.reason || '', tip: c.tip || '',
+        at: rec.created_at
+      });
+      if (it.examples.length > 8) it.examples.pop();
+    });
+  }
+  function errByKey() {
+    var m = {};
+    errStore.items.forEach(function (it) { m[it.key] = it; });
+    return m;
+  }
+  function loadErrors() {
+    var stored = load('gd_errors', null);
+    if (stored && Array.isArray(stored.items)) return stored;
+    var st = { round: 0, items: [] };
+    var byKey = {};
+    sentences.slice().sort(function (a, b) { return a.created_at - b.created_at; })
+      .forEach(function (rec) { ingestSentence(st, byKey, rec); });
+    save('gd_errors', st);
+    return st;
+  }
+  var errStore = loadErrors();
+  function saveErr() { save('gd_errors', errStore); }
+  function errRate(it) { return it.appear ? it.wrong / it.appear : 0; }
+  function errStatus(it) {
+    var r = errRate(it);
+    if (it.manualMastered) return { label: '已掌握', cls: 'dot-g', manual: true };
+    if (r < 0.2 && (it.appear - 1) >= 3) return { label: '已掌握', cls: 'dot-g', manual: false };
+    if (r >= 0.5) return { label: '未掌握', cls: 'dot-r', manual: false };
+    return { label: '巩固中', cls: 'dot-y', manual: false };
+  }
+  function weightOf(it) {
+    var base = Math.max(errRate(it), 0.02);
+    var gap = Math.min(Math.max(errStore.round - it.lastSeenRound, 0), 6);
+    var master = errStatus(it).label === '已掌握' ? 0.3 : 1;
+    return base * (1 + 0.15 * gap) * master;
+  }
+  function applyAnswer(it, ok) {
+    it.appear++;
+    if (!ok) it.wrong++;
+    it.lastSeenRound = errStore.round;
+    it.lastTestedAt = Date.now();
+    saveErr();
+    updateErrTab();
+    return errStatus(it);
+  }
+  function updateErrTab() {
+    var btn = document.querySelector('.tabs [data-tab="errors"]');
+    if (btn) btn.textContent = errStore.items.length ? '错误本 · ' + errStore.items.length : '错误本';
+  }
+  function hlSeg(text, seg) {
+    if (!seg) return escapeHtml(text);
+    var pos = text.indexOf(seg);
+    if (pos === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, pos)) +
+      '<mark class="hl-err">' + escapeHtml(seg) + '</mark>' +
+      escapeHtml(text.slice(pos + seg.length));
+  }
+
+  /* ---------- M2：错误本 UI ---------- */
+  var errSort = 'rate';
+  function renderErrors() {
+    var list = errStore.items.slice();
+    var counts = { r: 0, y: 0, g: 0 };
+    errStore.items.forEach(function (it) {
+      var s = errStatus(it).label;
+      if (s === '未掌握') counts.r++; else if (s === '巩固中') counts.y++; else counts.g++;
+    });
+    $('err-stats').innerHTML = '条目 ' + list.length +
+      ' · <span class="dot dot-r"></span>未掌握 ' + counts.r +
+      ' · <span class="dot dot-y"></span>巩固中 ' + counts.y +
+      ' · <span class="dot dot-g"></span>已掌握 ' + counts.g +
+      ' <span class="hint">错误率 = 累计答错 ÷ 累计出现（首次校对判错计 1 次）</span>';
+    list.sort(function (a, b) {
+      if (errSort === 'wrong') return b.wrong - a.wrong;
+      if (errSort === 'recent') {
+        var ta = a.lastTestedAt || (a.examples[0] && a.examples[0].at) || 0;
+        var tb = b.lastTestedAt || (b.examples[0] && b.examples[0].at) || 0;
+        return tb - ta;
+      }
+      return errRate(b) - errRate(a);
+    });
+    var wSum = errStore.items.reduce(function (n, it) { return n + weightOf(it); }, 0);
+    var html = '';
+    if (!list.length) {
+      html = '<p class="hint">暂无错误条目。校对判「有误」的句子会自动收录进来。</p>';
+    }
+    list.forEach(function (it) {
+      var st = errStatus(it);
+      var r = errRate(it);
+      var rateCls = r >= 0.5 ? 'rate-r' : (r >= 0.2 ? 'rate-y' : 'rate-g');
+      var share = wSum > 0 ? weightOf(it) / wSum * 100 : 0;
+      var fillCls = r >= 0.5 ? 'var(--red)' : (r >= 0.2 ? 'var(--yellow)' : 'var(--green)');
+      var lastTxt = it.lastTestedAt ? '最近测试 ' + fmtTime(it.lastTestedAt) :
+        ('最近出错 ' + ((it.examples[0] && fmtTime(it.examples[0].at)) || '—'));
+      html += '<div class="rec" data-key="' + escapeHtml(it.key) + '">' +
+        '<div class="head">' +
+        '<span class="v ' + (st.cls === 'dot-r' ? 'bad' : st.cls === 'dot-y' ? 'warn' : 'ok') + '">' + st.label + (st.manual ? '（手动）' : '') + '</span>' +
+        '<strong>' + escapeHtml(it.point) + '</strong>' +
+        (it.level ? '<span class="badge level">' + escapeHtml(it.level) + '</span>' : '') +
+        (it.error_type ? '<span class="badge etype">' + escapeHtml(it.error_type) + '</span>' : '') +
+        '<span class="badge">答错 ' + it.wrong + '／出现 ' + it.appear + '</span>' +
+        '<span class="badge rate-badge ' + rateCls + '">错误率 ' + Math.round(r * 100) + '%</span>' +
+        '<time>' + lastTxt + '</time>' +
+        '</div>' +
+        '<div class="err-bar"><span class="hint" style="flex:0 0 auto">下轮出现概率</span>' +
+        '<div class="track"><div class="fill" style="width:' + Math.max(share, 1) + '%;background:' + fillCls + '"></div></div>' +
+        '<span class="pc tabular-nums">' + share.toFixed(0) + '%</span></div>' +
+        '<div class="row" style="margin-top:8px">' +
+        (st.label === '已掌握'
+          ? '<button class="s toggle-master" type="button" style="border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer">' + (it.manualMastered ? '取消手动标记' : '标记已掌握') + '</button>'
+          : '<button class="s toggle-master" type="button" style="border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer">标记已掌握</button>') +
+        '<button class="s err-del" type="button" style="border:1px solid var(--border);background:var(--card);color:var(--muted);padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer">移出</button>' +
+        '<button class="s err-toggle" type="button" style="border:none;background:none;color:var(--primary);padding:6px 8px;font-size:13px;cursor:pointer">展开详情</button>' +
+        '</div>' +
+        '<div class="body">' + it.examples.map(function (ex) {
+          return '<div class="err-ex">' +
+            '<p class="sentence" style="margin:2px 0">' + hlSeg(ex.text, ex.wrongSeg) + '</p>' +
+            '<p style="margin:2px 0;font-size:14px">❌ ' + escapeHtml(ex.wrongSeg) + ' <span class="hint">→</span> <span class="fixed-part">✅ ' + escapeHtml(ex.right) + '</span></p>' +
+            '<p class="hint" style="margin:2px 0">' + escapeHtml(ex.reason) + (ex.tip ? '｜避免：' + escapeHtml(ex.tip) : '') + '</p>' +
+            '</div>';
+        }).join('') + '</div>' +
+        '</div>';
+    });
+    $('err-list').innerHTML = html;
+  }
+
+  $('err-sorts').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-s]');
+    if (!btn) return;
+    errSort = btn.getAttribute('data-s');
+    $('err-sorts').querySelectorAll('button').forEach(function (b) {
+      b.classList.toggle('active', b === btn);
+    });
+    renderErrors();
+  });
+
+  $('err-list').addEventListener('click', function (e) {
+    var recEl = e.target.closest('.rec');
+    if (!recEl) return;
+    var key = recEl.getAttribute('data-key');
+    var it = errStore.items.find(function (x) { return x.key === key; });
+    if (!it) return;
+    if (e.target.classList.contains('err-toggle')) {
+      recEl.classList.toggle('open');
+      e.target.textContent = recEl.classList.contains('open') ? '收起详情' : '展开详情';
+    } else if (e.target.classList.contains('toggle-master')) {
+      it.manualMastered = !it.manualMastered;
+      saveErr();
+      renderErrors();
+    } else if (e.target.classList.contains('err-del')) {
+      if (!confirm('移出该条目？错误统计将删除，句库记录保留。')) return;
+      errStore.items = errStore.items.filter(function (x) { return x.key !== key; });
+      saveErr();
+      renderErrors();
+      updateErrTab();
+    }
+  });
+
+  /* ---------- M3：测试模块 ---------- */
+  var quiz = null;
+  function renderQuizBrief() {
+    if (quiz) return;
+    var n = errStore.items.length;
+    var ok = sentences.filter(function (s) { return s.verdict !== 'wrong'; }).length;
+    $('quiz-brief').textContent = n
+      ? '错误本 ' + n + ' 条 · 正确句 ' + ok + ' 句 · 已完成 ' + errStore.round + ' 轮'
+      : '错误本为空：先去「校对练习」提交几句，判「有误」的句子会自动进入错误本。';
+    $('quiz-start').disabled = !n;
+  }
+  function chunkSentence(text, seg) {
+    var pos = text.indexOf(seg);
+    if (pos === -1) return null;
+    var parts = [];
+    function splitKeep(s) {
+      return s.match(/[^、。，！？「」（）]+[、。，！？「」（）]?/g) || [];
+    }
+    splitKeep(text.slice(0, pos)).forEach(function (p) { parts.push(p); });
+    parts.push(seg);
+    splitKeep(text.slice(pos + seg.length)).forEach(function (p) { parts.push(p); });
+    return parts.filter(function (p) { return p && p.trim(); });
+  }
+  function buildDistractors(it, ex) {
+    var right = normAns(ex.right);
+    var cand = {};
+    (DISTRACTOR_BANK[it.error_type] || []).forEach(function (d) { cand[normAns(d)] = d; });
+    errStore.items.forEach(function (o) {
+      if (o.error_type !== it.error_type) return;
+      o.examples.forEach(function (e) {
+        if (e.right) cand[normAns(e.right)] = e.right;
+        if (e.wrongSeg) cand[normAns(e.wrongSeg)] = e.wrongSeg;
+      });
+    });
+    delete cand[right];
+    delete cand[''];
+    delete cand[normAns(ex.wrongSeg)];
+    var arr = Object.keys(cand).map(function (k) { return cand[k]; });
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr.slice(0, 3);
+  }
+  function makeErrorQuestion(it) {
+    var ex = it.examples[0];
+    if (!ex) return null;
+    var types = [];
+    if (ex.wrongSeg && ex.text.indexOf(ex.wrongSeg) !== -1) types.push('fix');
+    var dis = buildDistractors(it, ex);
+    if (dis.length === 3 && normAns(ex.right).length > 0 && normAns(ex.right).length <= 10) types.push('choice');
+    types.push('fill');
+    var t = types[Math.floor(Math.random() * types.length)];
+    return { kind: 'err', item: it, ex: ex, type: t, distractors: dis, counted: true };
+  }
+  function makeCorrectQuestion(rec) {
+    var gps = (rec.grammar_points || []).filter(function (g) { return g.segment && normAns(g.segment).length <= 12; });
+    if (!gps.length) return null;
+    var g = gps[Math.floor(Math.random() * gps.length)];
+    return { kind: 'ok', rec: rec, gp: g, type: 'fill', counted: true };
+  }
+  function buildQuestions(n) {
+    var corrects = sentences.filter(function (s) { return s.verdict !== 'wrong'; });
+    var numCorrect = Math.min(Math.floor(n * 0.2), corrects.length);
+    var numErr = n - numCorrect;
+    if (errStore.items.length < numErr) {
+      numErr = errStore.items.length;
+      numCorrect = Math.min(n - numErr, corrects.length);
+    }
+    var qs = [];
+    var itemCount = {}, pointCount = {};
+    var pool = errStore.items.slice();
+    while (qs.length < numErr && pool.length) {
+      var weights = pool.map(function (it) {
+        return ((itemCount[it.key] || 0) >= 2 || (pointCount[it.point] || 0) >= 2) ? 0 : weightOf(it);
+      });
+      var sum = weights.reduce(function (a, b) { return a + b; }, 0);
+      if (sum <= 0) break;
+      var r = Math.random() * sum, pick = -1;
+      for (var i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { pick = i; break; } }
+      if (pick === -1) pick = pool.length - 1;
+      var it = pool.splice(pick, 1)[0];
+      itemCount[it.key] = (itemCount[it.key] || 0) + 1;
+      pointCount[it.point] = (pointCount[it.point] || 0) + 1;
+      var q = makeErrorQuestion(it);
+      if (q) qs.push(q);
+      if ((itemCount[it.key] || 0) < 2) pool.push(it);
+    }
+    var cpool = corrects.slice();
+    for (var j = 0; j < numCorrect && cpool.length; j++) {
+      var idx = Math.floor(Math.random() * cpool.length);
+      var cq = makeCorrectQuestion(cpool.splice(idx, 1)[0]);
+      if (cq) qs.push(cq);
+    }
+    return qs;
+  }
+  function matchAns(input, right, accepted) {
+    var v = normAns(input);
+    if (!v) return false;
+    if (v === normAns(right)) return true;
+    return (accepted || []).some(function (a) { return normAns(a) === v; });
+  }
+  function blankedText(text, seg) {
+    var pos = text.indexOf(seg);
+    if (pos === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, pos)) + '<span class="blank-slot">＿＿＿</span>' + escapeHtml(text.slice(pos + seg.length));
+  }
+  var TYPE_NAME = { fix: '改错题', choice: '选择题', fill: '填空题' };
+
+  function startQuiz() {
+    var n = parseInt($('quiz-count').value, 10) || 10;
+    var qs = buildQuestions(n);
+    if (!qs.length) { $('quiz-area').innerHTML = '<p class="status err">暂无可出题的内容：错误本为空且没有正确句。</p>'; return; }
+    errStore.round++;
+    saveErr();
+    quiz = {
+      qs: qs, idx: 0, score: 0, answered: 0, reCleared: 0,
+      wrongList: [], masteredNote: [], startTime: Date.now()
+    };
+    $('quiz-setup').hidden = true;
+    renderQuestion();
+  }
+  function renderQuestion() {
+    if (!quiz) return;
+    if (quiz.idx >= quiz.qs.length) { renderQuizSummary(); return; }
+    var q = quiz.qs[quiz.idx];
+    var total = quiz.qs.filter(function (x) { return x.counted; }).length;
+    var done = quiz.answered;
+    var ex = q.ex;
+    var head = '<div class="card"><div class="quiz-head">' +
+      '<strong>第 ' + (done + 1) + ' / ' + total + ' 题</strong>' +
+      (q.counted ? '' : ' <span class="badge">重测</span>') +
+      '<span class="badge level">' + TYPE_NAME[q.type] + '</span>' +
+      (q.kind === 'err'
+        ? '<span class="badge">' + escapeHtml(q.item.point) + '</span><span class="badge etype">' + escapeHtml(q.item.error_type) + '</span>'
+        : '<span class="badge m">正确句防遗忘</span>') +
+      '<span style="margin-left:auto;color:var(--muted);font-size:13px">得分 ' + quiz.score + '</span>' +
+      '</div>' +
+      '<div class="quiz-progress"><div style="width:' + (total ? done / total * 100 : 0) + '%"></div></div>';
+    var body = '';
+    if (q.kind === 'err') {
+      if (q.type === 'fix') {
+        var chunks = chunkSentence(ex.text, ex.wrongSeg) || [ex.text];
+        body = '<h3 class="sec">点击选中错误片段，并输入正确的写法</h3>' +
+          '<div id="q-chunks" style="margin:6px 0 10px">' + chunks.map(function (c, i) {
+            var isSeg = c === ex.wrongSeg;
+            return '<button type="button" class="opt" data-i="' + i + '" data-seg="' + escapeHtml(c) + '" style="display:inline-flex;margin:0 6px 6px 0"><span>' + escapeHtml(c) + '</span></button>';
+          }).join('') + '</div>' +
+          '<input class="quiz-input" id="q-input" type="text" placeholder="输入正确的片段…" autocomplete="off">';
+      } else if (q.type === 'choice') {
+        var opts = [ex.right].concat(q.distractors);
+        for (var i = opts.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = opts[i]; opts[i] = opts[j]; opts[j] = t; }
+        q.opts = opts;
+        body = '<h3 class="sec">选出正确的表达（考点：' + escapeHtml(q.item.point) + (q.item.level ? ' · ' + q.item.level : '') + '）</h3>' +
+          '<p class="sentence">' + blankedText(ex.text, ex.wrongSeg) + '</p>' +
+          '<div id="q-opts">' + opts.map(function (o) {
+            return '<label class="opt"><input type="radio" name="qopt" value="' + escapeHtml(o) + '"> <span>' + escapeHtml(o) + '</span></label>';
+          }).join('') + '</div>';
+      } else {
+        body = '<h3 class="sec">在空格处填入正确的表达</h3>' +
+          '<p class="sentence">' + blankedText(ex.text, ex.wrongSeg) + '</p>' +
+          '<input class="quiz-input" id="q-input" type="text" placeholder="输入空格处应填的内容…" autocomplete="off">';
+      }
+    } else {
+      body = '<h3 class="sec">回忆并填入空格处的表达（正确句巩固）</h3>' +
+        '<p class="sentence">' + blankedText(q.rec.text, q.gp.segment) + '</p>' +
+        '<input class="quiz-input" id="q-input" type="text" placeholder="输入空格处应填的内容…" autocomplete="off">' +
+        '<p class="hint" style="margin:6px 0 0">语法点：' + escapeHtml(q.gp.point) + (q.gp.level ? ' · ' + q.gp.level : '') + '</p>';
+    }
+    var foot = '<div class="row"><button class="primary" id="q-submit" type="button">提交答案</button></div></div>';
+    $('quiz-area').innerHTML = head + body + foot;
+    wireQuestion(q);
+  }
+  function wireQuestion(q) {
+    var chunksBox = $('q-chunks');
+    if (chunksBox) {
+      chunksBox.addEventListener('click', function (e) {
+        var b = e.target.closest('.opt');
+        if (!b) return;
+        chunksBox.querySelectorAll('.opt').forEach(function (x) { x.classList.remove('sel'); });
+        b.classList.add('sel');
+      });
+    }
+    $('q-submit').addEventListener('click', function () { judgeQuestion(q); });
+  }
+  function judgeQuestion(q) {
+    var ex = q.ex;
+    var ok = false, userAns = '';
+    if (q.kind === 'err') {
+      if (q.type === 'fix') {
+        var selEl = document.querySelector('#q-chunks .opt.sel');
+        var picked = selEl ? selEl.getAttribute('data-seg') : '';
+        var typed = ($('q-input').value || '');
+        userAns = (picked ? picked + ' → ' : '') + typed;
+        ok = picked === ex.wrongSeg && matchAns(typed, ex.right, ex.accepted);
+      } else if (q.type === 'choice') {
+        var sel = document.querySelector('input[name="qopt"]:checked');
+        userAns = sel ? sel.value : '';
+        ok = userAns === ex.right;
+      } else {
+        userAns = $('q-input').value || '';
+        ok = matchAns(userAns, ex.right, ex.accepted);
+      }
+    } else {
+      userAns = $('q-input').value || '';
+      ok = matchAns(userAns, q.gp.segment, []);
+    }
+    showFeedback(q, ok, userAns);
+  }
+  function showFeedback(q, ok, userAns) {
+    var ex = q.ex;
+    var before = q.kind === 'err' ? errRate(q.item) : null;
+    var newStatus = null;
+    if (q.kind === 'err') newStatus = applyAnswer(q.item, ok);
+    var after = q.kind === 'err' ? errRate(q.item) : null;
+    if (ok) {
+      if (q.counted) { quiz.score++; }
+      else { quiz.reCleared++; }
+    } else if (q.kind === 'err' && q.counted) {
+      quiz.wrongList.push({ q: q, userAns: userAns, before: before, after: after });
+    }
+    if (q.kind === 'err' && q.counted) quiz.answered++;
+    var masteredMsg = '';
+    if (q.kind === 'err' && newStatus && newStatus.label === '已掌握' && !q.item.manualMastered) {
+      quiz.masteredNote.push(q.item.point);
+      masteredMsg = '<p style="margin:4px 0 0"><span class="dot dot-g"></span>连续答对达标，已自动标记「已掌握」并降低出题权重。</p>';
+    }
+    var fb = '<div class="fb ' + (ok ? 'ok' : 'bad') + '">' +
+      '<h3>' + (ok ? '✓ 答对了' : '✗ 答错了') + (q.counted ? '' : '（重测）') + '</h3>' +
+      '<p style="margin:0;font-size:14.5px">你的答案：' + escapeHtml(userAns || '（空）') +
+      (ok ? '' : '　｜　正确答案：<span class="fixed-part">' + escapeHtml(q.kind === 'err' ? ex.right : q.gp.segment) + '</span>') + '</p>';
+    if (q.kind === 'err') {
+      fb += '<dl><dt>原因</dt><dd>' + escapeHtml(ex.reason || '') + '</dd>' +
+        '<dt>避免</dt><dd>' + escapeHtml(ex.tip || '') + '</dd></dl>' +
+        '<p style="margin:6px 0 0" class="hint">错误率 <span class="ratechg">' + Math.round(before * 100) + '% → ' + Math.round(after * 100) + '%</span>' +
+        '（答错 ' + q.item.wrong + '／出现 ' + q.item.appear + '）</p>' + masteredMsg;
+    } else {
+      fb += '<p class="hint" style="margin:6px 0 0">' + escapeHtml(q.gp.note || '') + '</p>';
+    }
+    fb += '</div>';
+    if (!ok && q.kind === 'err') {
+      quiz.qs.push({ kind: q.kind, item: q.item, ex: q.ex, type: q.type, distractors: q.distractors, counted: false });
+    }
+    var nextLabel = (quiz.idx + 1 >= quiz.qs.length) ? '查看本轮小结' : '下一题';
+    var btn = '<div class="row"><button class="primary" id="q-next" type="button">' + nextLabel + '</button></div>';
+    $('quiz-area').querySelector('.card').insertAdjacentHTML('afterend', fb + btn);
+    $('q-submit').disabled = true;
+    $('q-next').addEventListener('click', function () {
+      quiz.idx++;
+      renderQuestion();
+    });
+  }
+  function renderQuizSummary() {
+    var total = quiz.qs.filter(function (x) { return x.counted; }).length;
+    var mins = Math.max(1, Math.round((Date.now() - quiz.startTime) / 60000));
+    var html = '<div class="card"><h2>本轮小结</h2>' +
+      '<div class="sum-kpis">' +
+      '<div class="sum-kpi"><div class="l">答题数</div><div class="v">' + total + '</div></div>' +
+      '<div class="sum-kpi"><div class="l">答对</div><div class="v" style="color:var(--green)">' + quiz.score + '</div></div>' +
+      '<div class="sum-kpi"><div class="l">得分</div><div class="v">' + (total ? Math.round(quiz.score / total * 100) : 0) + '</div></div>' +
+      '<div class="sum-kpi"><div class="l">重测清零</div><div class="v">' + quiz.reCleared + '<small style="font-size:12px;color:var(--muted)">题</small></div></div>' +
+      '<div class="sum-kpi"><div class="l">用时</div><div class="v">' + mins + '<small style="font-size:12px;color:var(--muted)">分钟</small></div></div>' +
+      '</div></div>';
+    if (quiz.wrongList.length) {
+      html += '<div class="card"><h2>错题清单（已回写错误本）</h2>' + quiz.wrongList.map(function (w) {
+        return '<div class="rec"><div class="head"><span class="v bad">× 答错</span><strong>' + escapeHtml(w.q.item.point) + '</strong>' +
+          '<span class="badge etype">' + escapeHtml(w.q.item.error_type) + '</span></div>' +
+          '<p class="sentence" style="margin:6px 0 2px">' + hlSeg(w.q.ex.text, w.q.ex.wrongSeg) + '</p>' +
+          '<p class="hint" style="margin:2px 0">你的答案：' + escapeHtml(w.userAns || '（空）') + ' ✗　｜　正确：<span class="fixed-part">' + escapeHtml(w.q.ex.right) + '</span>' +
+          '　｜　错误率 <span class="ratechg">' + Math.round(w.before * 100) + '% → ' + Math.round(w.after * 100) + '%</span></p></div>';
+      }).join('') + '</div>';
+    }
+    if (quiz.masteredNote.length) {
+      html += '<div class="card" style="background:var(--green-bg);border-color:#bfe6d6"><h2 style="color:var(--green);margin-bottom:4px">进步提示</h2>' +
+        '<p style="margin:0;font-size:14px">' + quiz.masteredNote.map(escapeHtml).join('、') + ' 已达「已掌握」标准，下轮出题降权但不消失。</p></div>';
+    }
+    html += '<div class="row" style="justify-content:center">' +
+      '<button class="primary" id="quiz-again" type="button">再来一轮</button>' +
+      '<button class="s" id="quiz-back" type="button" style="border:1px solid var(--border);background:var(--card);padding:9px 22px;border-radius:8px;font-size:15px;cursor:pointer">返回校对练习</button></div>';
+    $('quiz-area').innerHTML = html;
+    quiz = null;
+    $('quiz-again').addEventListener('click', function () { renderQuizBrief(); $('quiz-setup').hidden = false; $('quiz-area').innerHTML = ''; startQuiz(); });
+    $('quiz-back').addEventListener('click', function () {
+      $('quiz-setup').hidden = false;
+      $('quiz-area').innerHTML = '';
+      renderQuizBrief();
+      document.querySelector('.tabs [data-tab="practice"]').click();
+    });
+  }
+  $('quiz-start').addEventListener('click', startQuiz);
+
+  /* ---------- 导出 / 导入 / 清空 ---------- */
+  $('btn-export').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify({ app: 'grammar-dojo', version: APP_VERSION, exported_at: Date.now(), sentences: sentences }, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    a.href = URL.createObjectURL(blob);
+    a.download = 'grammar-dojo-backup-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+    $('lib-status').textContent = '已导出 ' + sentences.length + ' 条记录。';
+  });
+
+  $('btn-import').addEventListener('click', function () { $('import-file').click(); });
+  $('import-file').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        var incoming = Array.isArray(data) ? data : (data.sentences || []);
+        var ids = {};
+        sentences.forEach(function (s) { ids[s.id] = true; });
+        var added = 0;
+        incoming.forEach(function (s) {
+          if (s && s.id && !ids[s.id] && s.text) { sentences.push(s); ids[s.id] = true; added++; }
+        });
+        sentences.sort(function (a, b) { return b.created_at - a.created_at; });
+        save('gd_sentences', sentences);
+        renderLibrary();
+        updateLibTab();
+        $('lib-status').textContent = '导入完成：新增 ' + added + ' 条，跳过重复/无效 ' + (incoming.length - added) + ' 条。';
+      } catch (err) {
+        $('lib-status').textContent = '导入失败：文件不是有效的备份 JSON。';
+      }
+      $('import-file').value = '';
+    };
+    reader.readAsText(file, 'utf-8');
+  });
+
+  $('btn-clear').addEventListener('click', function () {
+    if (!confirm('确定清空全部 ' + sentences.length + ' 条记录？此操作不可恢复，建议先导出备份。')) return;
+    sentences = [];
+    save('gd_sentences', sentences);
+    renderLibrary();
+    updateLibTab();
+    $('lib-status').textContent = '已清空全部数据。';
+  });
+
+  /* ---------- 设置 ---------- */
+  function readSettingsFromInputs(persist) {
+    settings = {
+      provider: $('set-provider').value === 'custom' ? 'custom' : 'glm',
+      endpoint: $('set-endpoint').value.trim() || GLM_ENDPOINT,
+      apiKey: $('set-key').value.trim(),
+      model: $('set-model').value.trim() || 'glm-4-flash',
+      proxy: $('set-proxy').checked
+    };
+    if (persist) save('gd_settings', settings);
+  }
+  function syncProviderUI() {
+    $('field-endpoint').style.display = settings.provider === 'custom' ? '' : 'none';
+  }
+  function fillSettingsForm() {
+    $('set-provider').value = settings.provider === 'custom' ? 'custom' : 'glm';
+    $('set-endpoint').value = settings.provider === 'custom' ? settings.endpoint : GLM_ENDPOINT;
+    $('set-key').value = settings.apiKey;
+    $('set-model').value = settings.model;
+    $('set-proxy').checked = settings.proxy !== false;
+    syncProviderUI();
+  }
+  fillSettingsForm();
+  $('set-provider').addEventListener('change', function () {
+    settings.provider = $('set-provider').value === 'custom' ? 'custom' : 'glm';
+    syncProviderUI();
+  });
+
+  $('btn-save-settings').addEventListener('click', function () {
+    readSettingsFromInputs(true);
+    $('set-status').className = 'status'; $('set-status').textContent = '设置已保存到本机。';
+  });
+
+  $('btn-test').addEventListener('click', function () {
+    var st = $('set-status');
+    readSettingsFromInputs(true);
+    if (!settings.apiKey) { st.className = 'status err'; st.textContent = '请先填写 API Key。'; return; }
+    var vErr = validateSettings();
+    if (vErr) { st.className = 'status err'; st.textContent = vErr; return; }
+    st.className = 'status'; st.textContent = '测试中…';
+    callLLMTest().then(function (ok) {
+      st.textContent = ok;
+    }).catch(function (err) {
+      st.className = 'status err';
+      st.textContent = '连接失败：' + (err && err.message ? err.message : '未知错误') +
+        (err && err.name === 'TypeError' ? '（网络/CORS：请确认 serve.ps1 正在运行且本地转发已开启）' : '');
+    });
+    function callLLMTest() {
+      return fetch(apiUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + settings.apiKey },
+        body: JSON.stringify({
+          model: settings.model,
+          messages: [{ role: 'user', content: '回复"OK"两个字母即可' }],
+          max_tokens: 8
+        })
+      }).then(function (res) {
+        if (!res.ok) return res.text().catch(function () { return ''; }).then(function (t) {
+          throw new Error('HTTP ' + res.status + (t ? '：' + t.slice(0, 120) : ''));
+        });
+        return '连接成功 ✓ 模型 ' + settings.model + ' 可用（' + (settings.proxy ? '本地转发' : '直连') + '）。';
+      });
+    }
+  });
+
+  /* 数据迁移（v0.4.4）：历史记录按权威条目库与批改结论重新对齐（幂等），笔记/句库同步受益 */
+  sentences.forEach(function (rec) { patchGrammarPoints(rec); });
+  save('gd_sentences', sentences);
+
+  updateLibTab();
+  updateErrTab();
+  /* 测试钩子：供自动化验证接续扫描（不涉及敏感数据） */
+  window.__gdTest = { hardConjScan: hardConjScan, softConjScan: softConjScan, lookupGrammar: lookupGrammar, patchGrammarPoints: patchGrammarPoints, applyFactChecks: applyFactChecks, extractJson: extractJson };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>汇总报告（M4 原型）</title>
+<link rel="stylesheet" href="mock-base.css">
+</head>
+<body>
+<div class="wrap">
+  <p class="frame-title">图 12-8 · 汇总报告页 · M4 高保真原型（F2-3 / F2-4）</p>
+
+  <header class="top">
+    <h1>语法道场</h1>
+    <span class="ver">v0.5.0-M4 · PRD v0.5</span>
+  </header>
+  <nav class="tabs">
+    <span>校对练习</span><span>句库</span><span>笔记</span><span>错误本<i>M2</i></span><span>测试<i>M3</i></span><span class="active">汇总报告<i>M4</i></span><span>设置</span>
+  </nav>
+
+  <div class="card">
+    <h2>总览<span class="ann">1</span></h2>
+    <div class="kpis">
+      <div class="kpi"><div class="l">累计句子</div><div class="v">86<small>句</small></div></div>
+      <div class="kpi"><div class="l">正确率</div><div class="v">71<small>%</small></div></div>
+      <div class="kpi"><div class="l">覆盖语法点</div><div class="v">34<small>个</small></div></div>
+      <div class="kpi"><div class="l">连续练习</div><div class="v">6<small>天</small></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>语法点错误率 Top 5<span class="ann">2</span></h2>
+    <div class="barrow"><span class="nm">〜てばかりいる（D-E）</span><div class="track"><div class="fill r" style="width:75%"></div></div><span class="pc">75%</span></div>
+    <div class="barrow"><span class="nm">存在場所 に／で（F-G）</span><div class="track"><div class="fill r" style="width:40%"></div></div><span class="pc">40%</span></div>
+    <div class="barrow"><span class="nm">受身形 〜られる（D-E）</span><div class="track"><div class="fill y" style="width:33%"></div></div><span class="pc">33%</span></div>
+    <div class="barrow"><span class="nm">〜たら／〜ば 混用（D-E）</span><div class="track"><div class="fill y" style="width:25%"></div></div><span class="pc">25%</span></div>
+    <div class="barrow"><span class="nm">敬语 〜られる（A-C）</span><div class="track"><div class="fill y" style="width:22%"></div></div><span class="pc">22%</span></div>
+  </div>
+
+  <div class="card">
+    <h2>错误类型占比<span class="ann">3</span></h2>
+    <div class="stackbar">
+      <div style="width:38%;background:#3b6ef5">助词误用 38%</div>
+      <div style="width:22%;background:#7c9dfd">动词变形 22%</div>
+      <div style="width:16%;background:#d64545">接续 16%</div>
+      <div style="width:14%;background:#b8860b">时态・体 14%</div>
+      <div style="width:10%;background:#98a2ad">其他 10%</div>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin:4px 0 0">惯性错误模式一目了然：助词与动词变形合计占 60%，是优先攻克方向。</p>
+  </div>
+
+  <div class="card">
+    <h2>正确率趋势（按周）<span class="ann">4</span></h2>
+    <div style="display:flex;align-items:flex-end;gap:14px;height:110px;padding:0 6px">
+      <div style="flex:1;text-align:center"><div style="background:#c9d4f7;border-radius:4px 4px 0 0;height:52%"></div><div style="font-size:12.5px;color:var(--muted)">W1<br><b style="color:var(--text)">52%</b></div></div>
+      <div style="flex:1;text-align:center"><div style="background:#a9bcf9;border-radius:4px 4px 0 0;height:61%"></div><div style="font-size:12.5px;color:var(--muted)">W2<br><b style="color:var(--text)">61%</b></div></div>
+      <div style="flex:1;text-align:center"><div style="background:#7c9dfd;border-radius:4px 4px 0 0;height:66%"></div><div style="font-size:12.5px;color:var(--muted)">W3<br><b style="color:var(--text)">66%</b></div></div>
+      <div style="flex:1;text-align:center"><div style="background:#3b6ef5;border-radius:4px 4px 0 0;height:71%"></div><div style="font-size:12.5px;color:var(--muted)">W4<br><b style="color:var(--text)">71%</b></div></div>
+    </div>
+  </div>
+
+  <div class="row" style="justify-content:center">
+    <button class="s">导出 Markdown</button>
+    <button class="s">导出 CSV</button><span class="ann">5</span>
+  </div>
+
+  <div class="legend">
+    <ul>
+      <li><b class="n">1</b>总览四指标（F2-3）：累计句数／正确率／覆盖语法点／连续练习天数，数据来自句库实时计算。</li>
+      <li><b class="n">2</b>语法点错误率排行＝薄弱点定位入口，点击语法点跳转错误本筛选（M4 与 M2 联动）。</li>
+      <li><b class="n">3</b>错误类型占比按附录 12.1 枚举统计，揭示惯性错误模式。</li>
+      <li><b class="n">4</b>正确率趋势按周聚合，观察长期进步（目标参考 §1.3）。</li>
+      <li><b class="n">5</b>一键导出 Markdown＋CSV（F2-4，Q4 已冻结格式），内容与页面一致。</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

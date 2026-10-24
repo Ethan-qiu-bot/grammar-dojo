@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>测试·轮末小结（M3 原型）</title>
+<link rel="stylesheet" href="mock-base.css">
+</head>
+<body>
+<div class="wrap">
+  <p class="frame-title">图 12-7b · 测试模块·轮末小结 · M3 高保真原型（F4-5 / F4-6 / F4-7）</p>
+
+  <header class="top">
+    <h1>语法道场</h1>
+    <span class="ver">v0.4.0-M3 · PRD v0.5</span>
+  </header>
+  <nav class="tabs">
+    <span>校对练习</span><span>句库</span><span>笔记</span><span>错误本<i>M2</i></span><span class="active">测试<i>M3</i></span><span>汇总报告<i>M4</i></span><span>设置</span>
+  </nav>
+
+  <div class="card">
+    <h2>本轮小结<span class="ann">1</span></h2>
+    <div class="kpis">
+      <div class="kpi"><div class="l">答题数</div><div class="v">10</div></div>
+      <div class="kpi"><div class="l">答对</div><div class="v" style="color:var(--green)">7</div></div>
+      <div class="kpi"><div class="l">得分</div><div class="v">70<small>分</small></div></div>
+      <div class="kpi"><div class="l">重测清零</div><div class="v">2<small>题</small></div></div>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin:10px 0 0">「重测清零」＝本轮内答错后重测直到答对的题数（Q7）。</p>
+  </div>
+
+  <div class="card">
+    <h2>错题清单（已回写错误本）<span class="ann">2</span></h2>
+    <div class="rec" style="margin-bottom:10px">
+      <div class="head">
+        <span class="v bad">× 答错</span><strong>〜てばかりいる（D-E）</strong><span class="badge etype">接续</span>
+      </div>
+      <p class="sentence" style="margin:6px 0 2px">彼はゲームを<mark class="hl-err">するばかりです</mark>。→ <span class="fixed-part">してばかりいます</span></p>
+      <p style="font-size:13.5px;margin:4px 0;color:var(--muted)">你的答案：するばかりです ✗　｜　错误率 <b style="color:var(--red)">80% → 75%</b>，下轮仍高频出现<span class="ann">3</span></p>
+    </div>
+    <div class="rec" style="margin-bottom:0">
+      <div class="head">
+        <span class="v bad">× 答错</span><strong>存在場所 に／で（F-G）</strong><span class="badge etype">助词误用</span>
+      </div>
+      <p class="sentence" style="margin:6px 0 2px">教室<mark class="hl-err">で</mark>人はいません。→ <span class="fixed-part">に</span></p>
+      <p style="font-size:13.5px;margin:4px 0;color:var(--muted)">你的答案：で ✗　｜　错误率 <b style="color:var(--red)">33% → 40%</b>，已转「未掌握」</p>
+    </div>
+  </div>
+
+  <div class="card" style="background:var(--green-bg);border-color:#bfe6d6">
+    <h2 style="color:var(--green);margin-bottom:4px">进步提示<span class="ann">4</span></h2>
+    <p style="margin:0;font-size:14px">「〜てしまう」连续 3 次答对，错误率降至 10%，已自动标记 🟢 已掌握（F3-3），下轮出题降权但不消失。</p>
+  </div>
+
+  <div class="row" style="justify-content:center">
+    <button class="p">再来一轮</button>
+    <button class="s">返回校对练习</button>
+  </div>
+
+  <div class="legend">
+    <ul>
+      <li><b class="n">1</b>轮末小结展示得分与关键统计（F4-5）；重测题不计入总题数得分。</li>
+      <li><b class="n">2</b>错题清单逐条展示原句、你的答案、正确答案与错误率变化，全部已自动回写错误本（F4-6）。</li>
+      <li><b class="n">3</b>错误率变化实时可见：答错上升→下轮更高频；跨越 50% 阈值自动转「未掌握」。</li>
+      <li><b class="n">4</b>达阈值（&lt;20% 且测试≥3 次）自动转已掌握并降权（×0.3），正向激励。</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

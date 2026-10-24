@@ -1,0 +1,7 @@
+# ZCode workspace config (local only)
+.zcode/
+
+# Local temp/log files
+*.log
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>错误本（M2 原型）</title>
+<link rel="stylesheet" href="mock-base.css">
+</head>
+<body>
+<div class="wrap">
+  <p class="frame-title">图 12-6 · 错误本页 · M2 高保真原型（F3-1~F3-4）</p>
+
+  <header class="top">
+    <h1>语法道场</h1>
+    <span class="ver">v0.3.0-M2 · PRD v0.5</span>
+  </header>
+  <nav class="tabs">
+    <span>校对练习</span><span>句库</span><span>笔记</span><span class="active">错误本<i>M2</i></span><span>测试<i>M3</i></span><span>汇总报告<i>M4</i></span><span>设置</span>
+  </nav>
+
+  <div class="card">
+    <h2>错误本</h2>
+    <p class="stats">条目 12 · <span class="dot dot-r"></span>未掌握 4 · <span class="dot dot-y"></span>巩固中 5 · <span class="dot dot-g"></span>已掌握 3<span class="ann">1</span></p>
+    <div class="row" style="margin-top:2px">
+      <span class="badge" style="background:#1f2328;color:#fff">排序：错误率 ↓</span>
+      <span class="badge">按错误次数</span>
+      <span class="badge">按最近出错</span><span class="ann">2</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:12.5px">错误率 = 累计答错 ÷ 累计出现（首次校对判错计 1 次）</span>
+    </div>
+  </div>
+
+  <div class="rec" style="border-color:#f3c1c1">
+    <div class="head">
+      <span class="v bad">未掌握</span>
+      <strong>〜てばかりいる（D-E）</strong>
+      <span class="badge etype">接续</span>
+      <span class="badge">答错 2／出现 3</span>
+      <span class="badge" style="background:var(--red-bg);color:var(--red)">错误率 67%</span><span class="ann">3</span>
+      <time>最近测试 10-26</time>
+    </div>
+    <div class="barrow" style="margin:8px 0">
+      <span class="nm">下轮出现概率</span>
+      <div class="track"><div class="fill r" style="width:72%"></div></div>
+      <span class="pc">高（72%）</span><span class="ann">4</span>
+    </div>
+    <p class="sentence" style="margin:6px 0 2px">彼はゲームを<mark class="hl-err">するばかりです</mark>。</p>
+    <div class="corr">
+      <div class="chg" style="font-size:15px;margin-bottom:6px">❌ するばかりです <span style="color:var(--muted)">→</span> <span class="fixed-part">✅ してばかりいます</span></div>
+      <dl>
+        <dt>原因</dt><dd>「〜てばかりいる」表示"总是做…"，接续为て形＋ばかり；する 需先变て形して。</dd>
+        <dt>避免</dt><dd>记「动词て形＋ばかり＋いる」；する→して、来る→きて。</dd>
+      </dl>
+    </div>
+    <div class="row">
+      <button class="s">标记已掌握</button><span class="ann">5</span>
+      <button class="s dim">移出错误本</button>
+    </div>
+  </div>
+
+  <div class="rec">
+    <div class="head">
+      <span class="v warn">巩固中</span>
+      <strong>存在場所 に／で（F-G）</strong>
+      <span class="badge etype">助词误用</span>
+      <span class="badge">答错 1／出现 3</span>
+      <span class="badge" style="background:var(--yellow-bg);color:var(--yellow)">错误率 33%</span>
+      <time>最近测试 10-25</time>
+    </div>
+    <div class="row" style="margin-top:6px"><button class="s" style="font-size:13px;padding:4px 12px">展开详情</button></div>
+  </div>
+
+  <div class="rec" style="opacity:.75">
+    <div class="head">
+      <span class="v ok">已掌握</span>
+      <strong>〜てしまう（D-E）</strong>
+      <span class="badge">答错 1／出现 10</span>
+      <span class="badge" style="background:var(--green-bg);color:var(--green)">错误率 10% · 测试≥3 次</span>
+      <time>最近测试 10-20</time>
+      <span class="badge m">已自动降权（×0.3）</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <ul>
+      <li><b class="n">1</b>三档掌握状态自动流转（口径 §1.4）：🔴≥50%／🟡20–50%／🟢&lt;20% 且测试≥3 次；顶部计数实时汇总。</li>
+      <li><b class="n">2</b>三种排序（错误率／错误次数／最近出错时间，F3-4），默认按错误率降序。</li>
+      <li><b class="n">3</b>统计字段与 §1.4 口径完全一致；每条错误由校对判「有误」自动收录（F3-1），无需手动添加。</li>
+      <li><b class="n">4</b>「下轮出现概率」= 该条目权重占全部权重之比（F4-2 公式），随错误率与距上次出现轮数联动。</li>
+      <li><b class="n">5</b>手动操作（F3-4）：标记已掌握＝立即降权；移出＝从错误本删除（句库记录保留）。</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

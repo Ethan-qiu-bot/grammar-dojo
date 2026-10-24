@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>信息架构与页面流程</title>
+<link rel="stylesheet" href="mock-base.css">
+</head>
+<body>
+<div class="wrap">
+  <p class="frame-title">图 12-1 · 信息架构与页面流程（M=里程碑，P0 页签随里程碑逐个启用）</p>
+
+  <div class="ia-row">
+    <div class="ia-node root" style="flex:0 1 300px">语法道场 · 本地 Web 应用（单用户）</div>
+  </div>
+  <div class="ia-arrow-row"><span class="ia-arrow">主导航（页签）</span></div>
+
+  <div class="ia-row">
+    <div class="ia-node">校对练习<span class="m">M1</span></div>
+    <div class="ia-node">句库<span class="m">M1</span></div>
+    <div class="ia-node">笔记<span class="m">M1.1</span></div>
+    <div class="ia-node">设置<span class="m">M1</span></div>
+  </div>
+  <div class="ia-arrow-row">
+    <span class="ia-arrow">校对练习 <b>─提交自动存档─▶</b> 句库</span>
+    <span class="ia-arrow">校对练习 <b>─判「有误」自动收录─▶</b> 错误本</span>
+    <span class="ia-arrow">校对练习／句库 <b>─考点点击标记─▶</b> 笔记</span>
+  </div>
+
+  <div class="ia-row">
+    <div class="ia-node">错误本<span class="m">M2</span></div>
+    <div class="ia-node">测试模块<span class="m">M3</span></div>
+    <div class="ia-node">汇总报告<span class="m">M4</span></div>
+  </div>
+  <div class="ia-arrow-row">
+    <span class="ia-arrow">错误本 <b>─错误率加权出题─▶</b> 测试模块</span>
+    <span class="ia-arrow">测试模块 <b>─答对/答错回写─▶</b> 错误本（错误率↑↓ → 下轮权重联动）</span>
+  </div>
+  <div class="ia-arrow-row">
+    <span class="ia-arrow">句库＋错误本＋测试记录 <b>─汇总统计─▶</b> 汇总报告（导出 Markdown＋CSV）</span>
+  </div>
+
+  <div class="legend">
+    <ul>
+      <li><b class="n">1</b>主导航为单页应用的页签切换，无跳转刷新；页签按里程碑逐步开放（当前已上线：校对练习／句库／笔记／设置）。</li>
+      <li><b class="n">2</b>学习闭环：写句 → 校对 →（判错自动）错误本 → 加权测试 → 结果回写，全部在本地完成，刷新不丢数据。</li>
+      <li><b class="n">3</b>汇总报告为只读统计页，数据来源为句库＋错误本＋测试记录，支持一键导出（Q4：Markdown＋CSV）。</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
